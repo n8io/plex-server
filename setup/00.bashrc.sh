@@ -76,3 +76,5 @@ echo "bashrc updating..."
 prompt_for_creds # ask for custom paths
 MSG="bashrc updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
+
+set +e

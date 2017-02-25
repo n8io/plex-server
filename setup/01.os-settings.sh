@@ -78,3 +78,5 @@ write_new # write new values
 sysctl -p -q # apply changes
 MSG="OS settings updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
+
+set +e

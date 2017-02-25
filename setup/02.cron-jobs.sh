@@ -15,3 +15,5 @@ write_job() {
 }
 
 write_job "*/15 * * * *" "${CWD}/../scripts/cycle-mount.sh"
+
+set +e
