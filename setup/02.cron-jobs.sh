@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PARENT_DIR="$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"
 
 write_job() {
   EXISTS=$(crontab -l | grep -q "${2}" && echo 1 || echo 0)
@@ -14,6 +14,6 @@ write_job() {
   fi
 }
 
-write_job "*/15 * * * *" "${CWD}/../scripts/cycle-mount.sh"
+write_job "*/15 * * * *" "${PARENT_DIR}/scripts/cycle-mount.sh"
 
 set +e
