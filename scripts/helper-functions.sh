@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-DEF_CTL_BIN="which encfsctl"
+DEF_CTL_BIN="$(which encfsctl)"
 DEF_ENC_DIR_LOCAL="$([ ! -z "$ENC_DIR_LOCAL" ] && echo "$ENC_DIR_LOCAL" || echo "/mnt/x/encrypted")"
 DEF_ENCFS6_CONFIG="$([ ! -z "$ENCFS6_CONFIG" ] && echo "$ENCFS6_CONFIG" || echo "/encfs.xml")"
 
