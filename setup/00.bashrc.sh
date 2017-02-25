@@ -49,6 +49,8 @@ export \\
 
 . "${CWD}/scripts/helper-functions.sh"
 
+cd "${CWD}/.."
+
 #plex-settings-end
 EOT
 
