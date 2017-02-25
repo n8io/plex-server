@@ -18,7 +18,7 @@ LOG_FILE="${LOG_DIR}/${6:-$DEF_LOG_FILE}"
 mkdir -p "$LOG_DIR"
 
 echo "" > "$LOG_FILE"
-echo "Unmounting... " | tee -a "$LOG_FILE"
+echo "Unmounting... "
 fusermount -uz "$ENC_DIR_LOCAL" 2>/dev/null
 umount -l "$ENC_DIR_LOCAL" 2>/dev/null
 
@@ -35,8 +35,8 @@ CMD=""$RCLONE_BIN" mount \
   "$ENC_DIR_LOCAL" | tee -a "$LOG_FILE"
 "
 
-echo "Mounting with this command: " | tee -a "$LOG_FILE"
-echo $CMD | tee -a "$LOG_FILE"
+echo "Mounting with this command: "
+echo $CMD
 eval $CMD
 
 set +e
