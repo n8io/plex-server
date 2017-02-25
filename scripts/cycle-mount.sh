@@ -15,4 +15,6 @@ echo "Unmounting..." > "$LOG_FILE"
 screen -ls | grep ".rclone-mount" | cut -d. -f1 | awk '{print $1}' | xargs kill 2>/dev/null || true
 
 echo "Mounting..." >> "$LOG_FILE"
-screen -S rclone-mount -dm "${PLEX_CODE_DIR}/mount.sh"
+screen -S rclone-mount -dm "${PLEX_CODE_DIR}/scripts/mount.sh"
+
+set +e
