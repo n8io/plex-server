@@ -2,6 +2,19 @@
 set -e
 
 BASHRC="/root/.bashrc"
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+prompt_for_creds() {
+  echo -n "Enter your Amazon Cloud Drive encrypted directory [/encrypted]: "
+  read ENC_DIR_REMOTE
+  echo ""
+  echo -n "Enter the root path where you want everything to be mounted [/mnt/x]: "
+  read ENC_DIR_LOCAL
+  echo
+  write_bashrc "${ENC_DIR_REMOTE:-/encrypted}" "${ENC_DIR_LOCAL:-/mnt/x}"
+
+  return 0
+}
 
 wipe_old() {
   echo -n "  Removing previous plex settings from ${BASHRC}..."
@@ -11,26 +24,26 @@ wipe_old() {
   echo "done."
 }
 
-write_new() {
+write_bashrc() {
 echo -n "  Writing new plex settings to ${BASHRC}..."
 
 cat <<EOT >> "$BASHRC"
 #plex-settings-start
 
 export \\
-  ACD_MOUNT_DIR="/mnt/x" \\
+  ACD_MOUNT_DIR="\${2}" \\
   EDITOR="nano" \\
-  ENC_DIR_REMOTE="/_/encrypted" \\
+  ENC_DIR_REMOTE="\${1}" \\
   ENCFS_CREDS="/.encfs" \\
   ENCFS6_CONFIG="/encfs.xml" \\
   ENCFS_BIN="/usr/bin/encfs" \\
-  PLEX_CODE_DIR="/plex-server" \\
+  PLEX_CODE_DIR="$CWD" \\
   RCLONE_BIN="/usr/sbin/rclone" \\
   ;
 
 export \\
-  ENC_DIR_LOCAL="$${ACD_MOUNT_DIR}/encrypted" \\
-  DEC_DIR_LOCAL="$${ACD_MOUNT_DIR}/decrypted" \\
+  ENC_DIR_LOCAL="\${ACD_MOUNT_DIR}/encrypted" \\
+  DEC_DIR_LOCAL="\${ACD_MOUNT_DIR}/decrypted" \\
   ;
 
 #plex-settings-end
@@ -41,6 +54,6 @@ echo "done."
 
 echo "bashrc updating..."
 wipe_old # remove previous settings
-write_new # write new values
+write_bashrc # write new values
 MSG="bashrc updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
