@@ -5,12 +5,10 @@ BASHRC="/root/.bashrc"
 CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 prompt_for_creds() {
-  echo -n "Enter your Amazon Cloud Drive encrypted directory [/encrypted]: "
+  echo -n "  Enter your Amazon Cloud Drive encrypted directory [/encrypted]: "
   read ENC_DIR_REMOTE
-  echo ""
-  echo -n "Enter the root path where you want everything to be mounted [/mnt/x]: "
+  echo -n "  Enter the root path where you want everything to be mounted [/mnt/x]: "
   read ENC_DIR_LOCAL
-  echo
   write_bashrc "${ENC_DIR_REMOTE:-/encrypted}" "${ENC_DIR_LOCAL:-/mnt/x}"
 
   return 0
