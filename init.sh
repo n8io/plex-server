@@ -1,5 +1,5 @@
 #!/bin/bash
 set -e
 
-"./scripts/00.bashrc.sh"
-"./scripts/01.os-settings.sh"
+"./setup/00.bashrc.sh"
+"./setup/01.os-settings.sh"
