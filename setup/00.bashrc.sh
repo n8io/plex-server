@@ -53,7 +53,7 @@ export \\
   ENCFS_BIN="/usr/bin/encfs" \\
   ENCFS_CTL_BIN="/usr/bin/encfsctl" \\
   MOUNT_DIR="${4:-/mnt/x}" \\
-  PLEX_CODE_DIR="$CWD" \\
+  PLEX_CODE_DIR="${CWD}/.." \\
   RCLONE_BIN="/usr/sbin/rclone" \\
   ;
 
@@ -62,7 +62,7 @@ export \\
   DEC_DIR_LOCAL="\${MOUNT_DIR}/decrypted" \\
   ;
 
-source "${CWD}/../scripts/helper-functions.sh"
+source "${PLEX_CODE_DIR}/scripts/helper-functions.sh"
 
 cd "${CWD}/.."
 
