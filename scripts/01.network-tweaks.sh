@@ -75,6 +75,6 @@ echo "Network settings updating..."
 backup # make a backup
 wipe_old # remove previous
 write_new # write new values
-sysctl -p -q && \ # apply changes
+sysctl -p -q # apply changes
 MSG="Network settings updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"

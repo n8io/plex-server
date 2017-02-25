@@ -41,6 +41,6 @@ echo "done."
 
 echo "bashrc updating..."
 wipe_old # remove previous settings
-write_new && \ # write new values
+write_new # write new values
 MSG="bashrc updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
