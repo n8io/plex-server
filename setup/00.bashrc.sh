@@ -53,6 +53,7 @@ echo "done."
 }
 
 echo "bashrc updating..."
+prompt_for_creds # ask for custom paths
 wipe_old # remove previous settings
 write_bashrc # write new values
 MSG="bashrc updated successfully."; \
