@@ -37,6 +37,7 @@ export \\
   ENCFS_CREDS="/.encfs" \\
   ENCFS6_CONFIG="/encfs.xml" \\
   ENCFS_BIN="/usr/bin/encfs" \\
+  ENCFS_CTL_BIN="/usr/bin/encfsctl" \\
   PLEX_CODE_DIR="$CWD" \\
   RCLONE_BIN="/usr/sbin/rclone" \\
   ;
@@ -45,6 +46,8 @@ export \\
   ENC_DIR_LOCAL="\${ACD_MOUNT_DIR}/encrypted" \\
   DEC_DIR_LOCAL="\${ACD_MOUNT_DIR}/decrypted" \\
   ;
+
+. "${CWD}/scripts/helper-functions.sh"
 
 #plex-settings-end
 EOT
