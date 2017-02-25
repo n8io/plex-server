@@ -9,7 +9,9 @@ prompt_for_creds() {
   read ENC_DIR_REMOTE
   echo -n "  Enter the root path where you want everything to be mounted [/mnt/x]: "
   read ENC_DIR_LOCAL
-  write_bashrc "${ENC_DIR_REMOTE:-/encrypted}" "${ENC_DIR_LOCAL:-/mnt/x}"
+
+  wipe_old # remove previous settings
+  write_bashrc "${ENC_DIR_REMOTE:-/encrypted}" "${ENC_DIR_LOCAL:-/mnt/x}" # write new values
 
   return 0
 }
@@ -52,7 +54,5 @@ echo "done."
 
 echo "bashrc updating..."
 prompt_for_creds # ask for custom paths
-wipe_old # remove previous settings
-write_bashrc # write new values
 MSG="bashrc updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
