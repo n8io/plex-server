@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 DEF_RCLONE_BIN="$([ ! -z "$RCLONE_BIN" ] && echo "$RCLONE_BIN" || which rclone)"
 DEF_RCLONE_REMOTE_NAME="$([ ! -z "$RCLONE_REMOTE_NAME" ] && echo "$RCLONE_REMOTE_NAME" || "$RCLONE_BIN" listremotes | head -n 1 | sed -e 's/\(:\)*$//g')"
 DEF_ENC_DIR_REMOTE="$([ ! -z "$ENC_DIR_REMOTE" ] && echo "$ENC_DIR_REMOTE" || echo "/encrypted")"
@@ -17,18 +15,18 @@ LOG_FILE="${LOG_DIR}/${6:-$DEF_LOG_FILE}"
 
 mkdir -p "$LOG_DIR"
 
+echo "" > "$LOG_FILE"
+
 echo "Mounting with options:
 RCLONE_BIN=${RCLONE_BIN}
 RCLONE_REMOTE_NAME=${RCLONE_REMOTE_NAME}
 ENC_DIR_REMOTE=${ENC_DIR_REMOTE}
 ENC_DIR_LOCAL=${ENC_DIR_LOCAL}
 LOG_DIR=${LOG_DIR}
-LOG_FILE=${LOG_FILE}" > "$LOG_FILE"
-echo "Unmounting... "
+LOG_FILE=${LOG_FILE}" >> "$LOG_FILE"
+echo "Unmounting... " >> "$LOG_FILE"
 fusermount -uz "$ENC_DIR_LOCAL" 2>/dev/null
 umount -l "$ENC_DIR_LOCAL" 2>/dev/null
-
-set +e
 
 "$RCLONE_BIN" mount \
   --read-only \

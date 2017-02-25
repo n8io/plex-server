@@ -1,6 +1,4 @@
 #!/bin/sh
-set -e
-
 DEF_PLEX_CODE_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "$PLEX_CODE_DIR" || echo "/root/plex-server/scripts")"
 DEF_LOGS_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "${PLEX_CODE_DIR}/logs" || echo "/root/plex-server/logs")"
 DEF_LOG_FILE="rclone-mount.log"
@@ -16,5 +14,3 @@ screen -ls | grep ".rclone-mount" | cut -d. -f1 | awk '{print $1}' | xargs kill 
 
 echo "Mounting..." >> "$LOG_FILE"
 screen -S rclone-mount -dm "${PLEX_CODE_DIR}/scripts/mount.sh"
-
-set +e
