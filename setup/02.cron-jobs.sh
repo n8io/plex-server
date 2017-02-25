@@ -14,6 +14,6 @@ write_job() {
   fi
 }
 
-write_job "*/15 * * * *" "${PARENT_DIR}/scripts/cycle-mount.sh"
+write_job "0 * * * *" "${PARENT_DIR}/scripts/cycle-mount.sh"
 
 set +e
