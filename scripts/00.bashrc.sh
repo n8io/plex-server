@@ -39,8 +39,8 @@ EOT
 echo "done."
 }
 
-echo "Environment variables updating..."
+echo "bashrc updating..."
 wipe_old # remove previous settings
 write_new && \ # write new values
-MSG="Environment variables set successfully."; \
+MSG="bashrc updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
