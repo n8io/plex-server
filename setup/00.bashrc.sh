@@ -47,7 +47,7 @@ export \\
   DEC_DIR_LOCAL="\${ACD_MOUNT_DIR}/decrypted" \\
   ;
 
-. "${CWD}/scripts/helper-functions.sh"
+. "${CWD}/../scripts/helper-functions.sh"
 
 cd "${CWD}/.."
 
