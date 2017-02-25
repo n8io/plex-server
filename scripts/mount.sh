@@ -22,7 +22,7 @@ echo "Unmounting... " | tee -a "$LOG_FILE"
 fusermount -uz "$ENC_DIR_LOCAL" 2>/dev/null
 umount -l "$ENC_DIR_LOCAL" 2>/dev/null
 
-CMD="\"$RCLONE_BIN\" mount \
+CMD=""$RCLONE_BIN" mount \
   --read-only \
   --allow-non-empty \
   --allow-other \
