@@ -2,7 +2,7 @@
 set -e
 
 BASHRC="/root/.bashrc"
-CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLEX_CODE_DIR=$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
 
 PREV_REMOTE_DIR="${ENC_DIR_REMOTE:-/encrypted}"
 PREV_MOUNT_DIR="${MOUNT_DIR:-/mnt/x}"
@@ -53,7 +53,7 @@ export \\
   ENCFS_BIN="/usr/bin/encfs" \\
   ENCFS_CTL_BIN="/usr/bin/encfsctl" \\
   MOUNT_DIR="${4:-/mnt/x}" \\
-  PLEX_CODE_DIR="${CWD}/.." \\
+  PLEX_CODE_DIR="$PLEX_CODE_DIR" \\
   RCLONE_BIN="/usr/sbin/rclone" \\
   ;
 
@@ -64,7 +64,7 @@ export \\
 
 source "${PLEX_CODE_DIR}/scripts/helper-functions.sh"
 
-cd "${CWD}/.."
+cd "$PLEX_CODE_DIR"
 
 #plex-settings-end
 EOT
