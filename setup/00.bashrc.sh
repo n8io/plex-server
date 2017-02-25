@@ -33,9 +33,7 @@ prompt_for_creds() {
 
 wipe_old() {
   echo -n "  Removing previous plex settings from ${BASHRC}..."
-
   sed -i '/[#]plex[-]settings[-]start/,/[#]plex[-]settings[-]end/ d' "$BASHRC"
-
   echo "done."
 }
 

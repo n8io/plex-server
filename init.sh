@@ -2,5 +2,8 @@
 set -e
 
 "./setup/00.bashrc.sh"
-"./setup/01.os-settings.sh"
-"./setup/02.cron-jobs.sh"
+. /root/.bashrc
+"./setup/01.dependencies.sh"
+"./setup/02.os-settings.sh"
+"./setup/03.cron-jobs.sh"
+"./setup/04.plex.sh"

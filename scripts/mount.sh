@@ -32,6 +32,7 @@ umount -l "$ENC_DIR_LOCAL" 2>/dev/null
   --read-only \
   --allow-non-empty \
   --allow-other \
+  --buffer-size 1G
   --max-read-ahead 14G \
   --acd-templink-threshold 0 \
   --checkers 16 \

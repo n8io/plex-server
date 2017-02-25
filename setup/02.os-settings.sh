@@ -3,17 +3,13 @@ set -e
 
 backup() {
   echo -n "  Backing up current network settings..."
-
   cat /etc/sysctl.conf > "/etc/sysctl.conf.$(date +"%Y-%m-%d_%H-%M-%S")"
-
   echo "done."
 }
 
 wipe_old() {
   echo -n "  Removing previous network settings..."
-
   sed -i '/[#]plex[-]settings[-]start/,/[#]plex[-]settings[-]end/ d' /etc/sysctl.conf
-
   echo "done."
 }
 
