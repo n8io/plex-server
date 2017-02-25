@@ -12,9 +12,9 @@ export \
   ;
 
 decode() {
-  ENCFS6_CONFIG="$ENCFS6_CONFIG" "$ENCFS_CTL_BIN" decode . "${1:?A path to decode is required}" || return 1
+  ENCFS6_CONFIG="$ENCFS6_CONFIG" "$ENCFS_CTL_BIN" decode . "$1"
 }
 
 encode() {
-  ENCFS6_CONFIG="$ENCFS6_CONFIG" "$ENCFS_CTL_BIN" encode . "${1:?A path to encode is required}" || return 1
+  ENCFS6_CONFIG="$ENCFS6_CONFIG" "$ENCFS_CTL_BIN" encode . "$1"
 }
