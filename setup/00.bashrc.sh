@@ -29,9 +29,9 @@ cat <<EOT >> "$BASHRC"
 #plex-settings-start
 
 export \\
-  ACD_MOUNT_DIR="\${2}" \\
+  ACD_MOUNT_DIR="${2}" \\
   EDITOR="nano" \\
-  ENC_DIR_REMOTE="\${1}" \\
+  ENC_DIR_REMOTE="${1}" \\
   ENCFS_CREDS="/.encfs" \\
   ENCFS6_CONFIG="/encfs.xml" \\
   ENCFS_BIN="/usr/bin/encfs" \\
