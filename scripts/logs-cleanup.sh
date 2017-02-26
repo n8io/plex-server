@@ -1,6 +1,6 @@
 #!/bin/bash
-DIR="$(dirname $0)"
-PLEX_CODE_DIR=$(dirname "$DIR")
+SCRIPT=$(realpath $0)
+PLEX_CODE_DIR=$(dirname $SCRIPT)
 . "${PLEX_CODE_DIR}/.env"
 
 empty_log_file() {
