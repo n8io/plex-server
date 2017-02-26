@@ -33,7 +33,7 @@ prompt_for_creds() {
     ENCFS_CONFIG_DATA+=$c
   done
 
-  ENCFS_CONFIG_DATA=$(echo "$ENCFS_CONFIG_DATA" | xargs)
+  ENCFS_CONFIG_DATA=$(echo -e "$ENCFS_CONFIG_DATA" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
   if [ ! -z "$ENCFS_PWD" ]; then
     echo "$ENCFS_PWD" > "$PREV_ENCFS_CREDS"
