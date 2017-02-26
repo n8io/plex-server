@@ -10,7 +10,13 @@ LOG_FILE="${LOGS_DIR}/${3:-$DEF_LOG_FILE}"
 
 mkdir -p "$LOGS_DIR"
 
-echo "Unmounting..." > "$LOG_FILE"
+echo "
+SCREEN_BIN=$SCREEN_BIN
+PLEX_CODE_DIR=$PLEX_CODE_DIR
+LOG_FILE=$LOG_FILE
+" > "$LOG_FILE"
+
+echo "Unmounting..." >> "$LOG_FILE"
 "$SCREEN_BIN" -ls | grep ".rclone-mount" | cut -d. -f1 | awk '{print $1}' | xargs kill 2>/dev/null || true
 
 echo "Mounting..." >> "$LOG_FILE"
