@@ -7,12 +7,12 @@ PLEX_CODE_DIR="$(dirname "$(dirname "$SCRIPT")")"
 FIND_BIN="/usr/bin/find"
 SLEEP_BIN="/bin/sleep"
 LOG_FILE="${PLEX_CODE_DIR}/logs/mount-check.log"
-COUNT=$("$FIND_BIN" "${DEC_DIR_LOCAL}" -maxdepth 1 -type d | wc -l)
+COUNT=$("$FIND_BIN" "$DEC_DIR_LOCAL" -maxdepth 1 -type d | wc -l)
 
 if [ "$COUNT" -eq "1" ]; then
   log_error "Drives are not mounted. Attempting to remount..." "$LOG_FILE"
   "${PLEX_CODE_DIR}/scripts/cycle-mount.sh"
-  "$SLEEP_BIN" 2
+  "$SLEEP_BIN" 5
 
   RECOUNT=$("$FIND_BIN" "$DEC_DIR_LOCAL" -maxdepth 1 -type d | wc -l)
 
