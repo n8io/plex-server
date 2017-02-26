@@ -15,8 +15,6 @@ LOG_FILE="${LOG_DIR}/${6:-$DEF_LOG_FILE}"
 
 mkdir -p "$LOG_DIR"
 
-echo "" > "$LOG_FILE"
-
 echo "Mounting with options:
 RCLONE_BIN=${RCLONE_BIN}
 RCLONE_REMOTE_NAME=${RCLONE_REMOTE_NAME}
@@ -25,8 +23,7 @@ ENC_DIR_LOCAL=${ENC_DIR_LOCAL}
 LOG_DIR=${LOG_DIR}
 LOG_FILE=${LOG_FILE}" >> "$LOG_FILE"
 echo "Unmounting... " >> "$LOG_FILE"
-fusermount -uz "$ENC_DIR_LOCAL" 2>/dev/null
-umount -l "$ENC_DIR_LOCAL" 2>/dev/null
+fusermount -uz "$ENC_DIR_LOCAL" 2>/dev/null || true
 
 "$RCLONE_BIN" mount \
   --read-only \

@@ -3,7 +3,7 @@ set -e
 . /root/.bashrc
 
 unmount() {
-  mountpoint -q "$1" && fusermount -uz "$1" || true
+  fusermount -uz "$1" 2>/dev/null || true
 }
 
 mount_encrypted() {
