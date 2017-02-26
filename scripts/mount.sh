@@ -15,8 +15,9 @@ LOG_FILE="${LOG_DIR}/${6:-$DEF_LOG_FILE}"
 
 mkdir -p "$LOG_DIR"
 
-echo "Unmounting... " | tee -a "$LOG_FILE"
+echo -n "Unmounting... " | tee -a "$LOG_FILE"
 fusermount -uz "$ENC_DIR_LOCAL" 2>/dev/null || true
+echo "done." | tee -a "$LOG_FILE"
 
 echo "Mounting..." | tee -a "$LOG_FILE"
 
