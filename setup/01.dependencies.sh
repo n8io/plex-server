@@ -21,9 +21,9 @@ apt_install() {
 
 rclone_install() {
   # RCLONE_VERSION_BASE="http://downloads.rclone.org"
-  RCLONE_VERSION_BASE="http://beta.rclone.org/v1.35-129-g980cd5b"
+  RCLONE_VERSION_BASE="http://beta.rclone.org/"
   # RCLONE_VERSION="rclone-current-linux-amd64"
-  RCLONE_VERSION="rclone-v1.35-129-g980cd5bβ-linux-amd64"
+  RCLONE_VERSION="rclone-beta-latest-linux-amd64"
   echo -n "  Installing rclone..."
   cd / &&
   curl -O -s "${RCLONE_VERSION_BASE}/${RCLONE_VERSION}.zip" >/dev/null &&
@@ -32,8 +32,7 @@ rclone_install() {
   cp rclone /usr/sbin/ &&
   chown root:root /usr/sbin/rclone &&
   chmod 755 /usr/sbin/rclone &&
-  mkdir -p /usr/local/share/man/man1 &&
-  rm /rclone-current*
+  rm -rf /rclone-*
   echo "done."
 }
 
