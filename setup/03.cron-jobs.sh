@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-SCRIPT=$(realpath $0)
-PLEX_CODE_DIR=$(dirname $(dirname $SCRIPT))
+SCRIPT="$(realpath "$0")"
+PLEX_CODE_DIR="$(dirname "$(dirname "$SCRIPT")")"
+. "${PLEX_CODE_DIR}/.env"
 
 write_job() {
   EXISTS=$(crontab -l | grep -q "${2}" && echo 1 || echo 0)
