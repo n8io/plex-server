@@ -8,7 +8,7 @@ write_job() {
 
   if [ "$EXISTS" = "0" ]; then
     echo "Writing cron job for ${2}"
-    (crontab -l 2>/dev/null; echo "${1} . $HOME/.bashrc; ${2}") | crontab -
+    (crontab -l 2>/dev/null; echo "${1} ${2}") | crontab -
   else
     echo "Cron job for ${2} already exists!"
   fi

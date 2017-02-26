@@ -1,5 +1,5 @@
 #!/bin/bash
-. /root/.bashrc
+. "../.env"
 
 ENV_BIN="/usr/bin/env"
 FUSERMOUNT_BIN="/bin/fusermount"

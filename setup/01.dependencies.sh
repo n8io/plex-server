@@ -3,13 +3,13 @@ set -e
 
 apt_update() {
   echo -n "  Updating apt..."
-  apt -qq update >/dev/null
+  apt-get -qq update >/dev/null
   echo -n "done."
 }
 
 apt_install() {
   echo -n "  Installing dependencies..."
-  apt install -y \
+  apt-get install -y \
     glances \
     screen \
     git \

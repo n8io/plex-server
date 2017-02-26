@@ -3,6 +3,7 @@ set -e
 
 BASHRC="/root/.bashrc"
 PLEX_CODE_DIR=$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+ENV_FILE="${PLEX_CODE_DIR}/.env"
 
 PREV_REMOTE_DIR="${ENC_DIR_REMOTE:-/encrypted}"
 PREV_MOUNT_DIR="${MOUNT_DIR:-/mnt/x}"
@@ -57,8 +58,8 @@ prompt_for_settings() {
   read ENCFS6_CONFIG
 
   wipe_old # remove previous settings
-  # write new values
-  write_bashrc \
+  write_bashrc # write bashrc hooks
+  write_env \
     "${ENC_DIR_REMOTE:-${PREV_REMOTE_DIR}}" \
     "${ENCFS_CREDS:-${PREV_ENCFS_CREDS}}" \
     "${ENCFS6_CONFIG:-${PREV_ENCFS6_CONFIG}}" \
@@ -80,6 +81,20 @@ echo -n "  Writing new plex settings to ${BASHRC}..."
 cat <<EOT >> "$BASHRC"
 #plex-settings-start
 
+source "${PLEX_CODE_DIR}/.env"
+source "${PLEX_CODE_DIR}/scripts/helper-functions.sh"
+cd "$PLEX_CODE_DIR"
+
+#plex-settings-end
+EOT
+
+echo "done."
+}
+
+write_env() {
+echo -n "  Writing environment variables to ${ENV_FILE}..."
+rm -rf "${ENV_FILE:?not set}"
+cat <<EOT >> "$ENV_FILE"
 export \\
   EDITOR="nano" \\
   ENC_DIR_REMOTE="${1:-/encrypted}" \\
@@ -96,15 +111,12 @@ export \\
   ENC_DIR_LOCAL="\${MOUNT_DIR}/encrypted" \\
   DEC_DIR_LOCAL="\${MOUNT_DIR}/decrypted" \\
   ;
-
-source "${PLEX_CODE_DIR}/scripts/helper-functions.sh"
-
-cd "$PLEX_CODE_DIR"
-
-#plex-settings-end
 EOT
 
+chmod a+x "$ENV_FILE"
+
 echo "done."
+
 }
 
 echo "bashrc updating..."

@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-. /root/.bashrc
 
 unmount() {
   fusermount -uz "$1" 2>/dev/null || true

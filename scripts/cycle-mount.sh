@@ -1,5 +1,5 @@
 #!/bin/sh
-. /root/.bashrc
+. "../.env"
 
 AWK_BIN="/usr/bin/awk"
 CUT_BIN="/usr/bin/cut"
