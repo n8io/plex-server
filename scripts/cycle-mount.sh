@@ -1,5 +1,6 @@
 #!/bin/sh
-. "../.env"
+PLEX_CODE_DIR=$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+. "${PLEX_CODE_DIR}/.env"
 
 AWK_BIN="/usr/bin/awk"
 CUT_BIN="/usr/bin/cut"

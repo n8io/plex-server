@@ -1,5 +1,6 @@
 #!/bin/bash
-. "../.env"
+PLEX_CODE_DIR=$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+. "${PLEX_CODE_DIR}/.env"
 
 ENV_BIN="/usr/bin/env"
 FUSERMOUNT_BIN="/bin/fusermount"
