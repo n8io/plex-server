@@ -10,21 +10,23 @@ PREV_ENCFS_CREDS="${ENCFS_CREDS:-/.encfs}"
 PREV_ENCFS6_CONFIG="${ENCFS6_CONFIG:-/encfs.xml}"
 
 prompt_for_creds() {
-  MSG="Enter your encryption password"
+  MSG="  Enter your encryption password"
 
   if [ -f "$PREV_ENCFS_CREDS" ]; then
-    MSG="${MSG} or hit enter to use existing [use existing]"
+    MSG="${MSG} or hit enter to use existing [existing]"
   fi
 
   MSG="${MSG}: "
   echo -n "$MSG"
   read ENCFS_PWD
 
-  MSG="Paste in your encryption config"
+  MSG="  Paste in your encryption config"
   if [ -f "$PREV_ENCFS6_CONFIG" ]; then
-    MSG="${MSG} or hit enter to use existing [use existing]: "
+    MSG="${MSG} or hit enter to use existing [existing]"
   fi
 
+  MSG="${MSG}: "
+  echo -n "$MSG"
   IFS= read -d '' -n 1 ENCFS_CONFIG_DATA
   while IFS= read -d '' -n 1 -t 2 c
   do
