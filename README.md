@@ -14,5 +14,5 @@ cd / && git clone https://github.com/n8io/plex-server.git && cd plex-server
 ```
 1. Initialize
 ```
-./init.sh
+./install.sh
 ```
