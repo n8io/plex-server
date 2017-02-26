@@ -147,15 +147,15 @@ log_msg() {
 }
 
 log_error() {
-  log_msg "ERROR" "\$1" "\$2" "\$3"
+  log_msg "\e[31ERROR\e[0m" "\$1" "\$2" "\$3"
 }
 
 log_info() {
-  log_msg " INFO" "\$1" "\$2" "\$3"
+  log_msg " \e[36mINFO\e[0m" "\$1" "\$2" "\$3"
 }
 
 log_fatal() {
-  log_msg "FATAL" "\$1" "\$2" "\$3"
+  log_msg "\e[101mFATAL\e[0m" "\$1" "\$2" "\$3"
 }
 EOT
 
