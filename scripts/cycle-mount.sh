@@ -1,6 +1,6 @@
 #!/bin/sh
-SCRIPT=$(realpath $0)
-PLEX_CODE_DIR=$(dirname $(dirname $SCRIPT))
+SCRIPT="$(realpath "$0")"
+PLEX_CODE_DIR="$(dirname "$(dirname "$SCRIPT")")"
 . "${PLEX_CODE_DIR}/.env"
 
 AWK_BIN="/usr/bin/awk"
@@ -20,12 +20,14 @@ PLEX_CODE_DIR="${1:-$DEF_PLEX_CODE_DIR}"
 LOGS_DIR="${2:-$DEF_LOGS_DIR}"
 LOG_FILE="${LOGS_DIR}/${3:-$DEF_LOG_FILE}"
 
-"$DATE_BIN" > "$LOG_FILE"
-
-echo -n "Killing last screen session..." | "$TEE_BIN" -a "$LOG_FILE"
+# echo -n "Killing last screen session..." | "$TEE_BIN" -a "$LOG_FILE"
+log_info "Killing last screen session..." "$LOG_FILE" "-n"
 "$SCREEN_BIN" -ls | "$GREP_BIN" ".rclone-mount" | "$CUT_BIN" -d. -f1 | "$AWK_BIN" '{print $1}' | "$XARGS_BIN" "$KILL_BIN" 2>/dev/null || true
-echo "done." | "$TEE_BIN" -a "$LOG_FILE"
+log_info "done." "$LOG_FILE"
+# echo "done." | "$TEE_BIN" -a "$LOG_FILE"
 
-echo -n "Starting up new screen session..." | "$TEE_BIN" -a "$LOG_FILE"
+# echo -n "Starting up new screen session..." | "$TEE_BIN" -a "$LOG_FILE"
+log_info "Starting up new screen session..." "$LOG_FILE" "-n"
 "$SCREEN_BIN" -S rclone-mount -dm "${PLEX_CODE_DIR}/scripts/mount.sh" | "$TEE_BIN" -a "$LOG_FILE"
-echo "done." | "$TEE_BIN" -a "$LOG_FILE"
+log_info "done." "$LOG_FILE"
+# echo "done." | "$TEE_BIN" -a "$LOG_FILE"

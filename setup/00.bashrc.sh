@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-SCRIPT=$(realpath $0)
-PLEX_CODE_DIR=$(dirname $(dirname $SCRIPT))
+SCRIPT="$(realpath "$0")"
+PLEX_CODE_DIR="$(dirname "$(dirname "$SCRIPT")")"
 BASHRC="/root/.bashrc"
 ENV_FILE="${PLEX_CODE_DIR}/.env"
 
@@ -10,6 +10,7 @@ PREV_REMOTE_DIR="${ENC_DIR_REMOTE:-/encrypted}"
 PREV_MOUNT_DIR="${MOUNT_DIR:-/mnt/x}"
 PREV_ENCFS_CREDS="${ENCFS_CREDS:-/.encfs}"
 PREV_ENCFS6_CONFIG="${ENCFS6_CONFIG:-/encfs.xml}"
+PREV_PLEX_CODE_DIR="${PLEX_CODE_DIR:-/plex-server}"
 PREV_RCLONE_CONFIG="${RCLONE_CONFIG:-/root/.rclone.conf}"
 
 prompt_for_creds() {
@@ -68,6 +69,7 @@ prompt_for_settings() {
     "${ENCFS_CREDS:-${PREV_ENCFS_CREDS}}" \
     "${ENCFS6_CONFIG:-${PREV_ENCFS6_CONFIG}}" \
     "${MOUNT_DIR:-${PREV_MOUNT_DIR}}" \
+    "${PLEX_CODE_DIR:-${PREV_PLEX_CODE_DIR}}" \
     ;
 
   return 0
@@ -131,7 +133,7 @@ export \\
   ENCFS_BIN="/usr/bin/encfs" \\
   ENCFS_CTL_BIN="/usr/bin/encfsctl" \\
   MOUNT_DIR="${4:-/mnt/x}" \\
-  PLEX_CODE_DIR="$PLEX_CODE_DIR" \\
+  PLEX_CODE_DIR="${5:-/plex-server}" \\
   RCLONE_BIN="/usr/sbin/rclone" \\
   ;
 
@@ -139,6 +141,22 @@ export \\
   ENC_DIR_LOCAL="\${MOUNT_DIR}/encrypted" \\
   DEC_DIR_LOCAL="\${MOUNT_DIR}/decrypted" \\
   ;
+
+log_msg() {
+  echo "\$4" "\$(date) \${1}: \${2}" | "\${TEE_BIN:-/usr/bin/tee}" -a "\${3:-/plex-server/logs/default.log}"
+}
+
+log_error() {
+  log_msg "ERROR" "\$1" "\$2" "\$3"
+}
+
+log_info() {
+  log_msg " INFO" "\$1" "\$2" "\$3"
+}
+
+log_fatal() {
+  log_msg "FATAL" "\$1" "\$2" "\$3"
+}
 EOT
 
 chmod a+x "$ENV_FILE"
