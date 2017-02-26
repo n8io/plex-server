@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
+SCRIPT=$(realpath $0)
+PLEX_CODE_DIR=$(dirname $(dirname $SCRIPT))
 BASHRC="/root/.bashrc"
-DIR="$(dirname $0)"
-PLEX_CODE_DIR=$(dirname "$DIR")
 ENV_FILE="${PLEX_CODE_DIR}/.env"
 
 PREV_REMOTE_DIR="${ENC_DIR_REMOTE:-/encrypted}"
