@@ -151,7 +151,7 @@ log_error() {
 }
 
 log_info() {
-  log_msg " \e[36mINFO\e[0m" "\$1" "\$2" "\$3"
+  log_msg "\e[36mINFO\e[0m" "\$1" "\$2" "\$3"
 }
 
 log_fatal() {

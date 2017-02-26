@@ -17,9 +17,9 @@ write_job() {
 }
 
 echo "Cron jobs updating..."
-write_job "*/5 * * * *" "${PLEX_CODE_DIR}/scripts/mount-check.sh | tee -a /plex-server/logs/cron.log" # Check every 5 minutes that things are mounted
-write_job "1 8 * * *" "${PLEX_CODE_DIR}/scripts/logs-cleanup.sh | tee -a /plex-server/logs/cron.log" # ~3:01am Eastern
-write_job "2 9 * * *" "${PLEX_CODE_DIR}/scripts/cycle-mount.sh | tee -a /plex-server/logs/cron.log" # ~4:02am Eastern
+write_job "* * * * *" "${PLEX_CODE_DIR}/scripts/mount-check.sh" # Check every 5 minutes that things are mounted
+write_job "1 8 * * *" "${PLEX_CODE_DIR}/scripts/logs-cleanup.sh" # ~3:01am Eastern
+write_job "2 9 * * *" "${PLEX_CODE_DIR}/scripts/cycle-mount.sh" # ~4:02am Eastern
 MSG="Cron jobs updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
 
