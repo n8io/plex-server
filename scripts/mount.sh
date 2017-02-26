@@ -1,7 +1,9 @@
 #!/bin/bash
 . /root/.bashrc
 
-DEF_RCLONE_BIN="$([ ! -z "$RCLONE_BIN" ] && echo "$RCLONE_BIN" || which rclone)"
+env | grep ENC | tee -a "/plex-server/logs/rclone-mount.log"
+
+DEF_RCLONE_BIN="$([ ! -z "$RCLONE_BIN" ] && echo "$RCLONE_BIN" || /usr/sbin/rclone)"
 DEF_RCLONE_REMOTE_NAME="$([ ! -z "$RCLONE_REMOTE_NAME" ] && echo "$RCLONE_REMOTE_NAME" || "$RCLONE_BIN" listremotes | head -n 1 | sed -e 's/\(:\)*$//g')"
 DEF_ENC_DIR_REMOTE="$([ ! -z "$ENC_DIR_REMOTE" ] && echo "$ENC_DIR_REMOTE" || echo "/encrypted")"
 DEF_ENC_DIR_LOCAL="$([ ! -z "$ENC_DIR_LOCAL" ] && echo "$ENC_DIR_LOCAL" || echo "/mnt/x/encrypted")"
