@@ -9,6 +9,7 @@ PREV_REMOTE_DIR="${ENC_DIR_REMOTE:-/encrypted}"
 PREV_MOUNT_DIR="${MOUNT_DIR:-/mnt/x}"
 PREV_ENCFS_CREDS="${ENCFS_CREDS:-/.encfs}"
 PREV_ENCFS6_CONFIG="${ENCFS6_CONFIG:-/encfs.xml}"
+PREV_RCLONE_CONFIG="${RCLONE_CONFIG:-/root/.rclone.conf}"
 
 prompt_for_creds() {
   MSG="  Enter your encryption password"
@@ -65,6 +66,29 @@ prompt_for_settings() {
     "${ENCFS6_CONFIG:-${PREV_ENCFS6_CONFIG}}" \
     "${MOUNT_DIR:-${PREV_MOUNT_DIR}}" \
     ;
+
+  return 0
+}
+
+prompt_for_rclone() {
+  MSG="  Paste in your rclone config"
+  if [ -f "$PREV_RCLONE_CONFIG" ]; then
+    MSG="${MSG} or hit enter to use existing [existing]"
+  fi
+
+  MSG="${MSG}: "
+  echo -n "$MSG"
+  IFS= read -d '' -n 1 RCLONE_CONFIG_DATA
+  while IFS= read -d '' -n 1 -t 1 c
+  do
+    RCLONE_CONFIG_DATA+=$c
+  done
+
+  RCLONE_CONFIG_DATA=$(echo -e "$RCLONE_CONFIG_DATA" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+  if [ ! -z "$RCLONE_CONFIG_DATA" ]; then
+    echo "$RCLONE_CONFIG_DATA" > "$PREV_RCLONE_CONFIG"
+  fi
 
   return 0
 }
@@ -127,6 +151,7 @@ misc() {
 echo "bashrc updating..."
 prompt_for_settings # ask for settings
 prompt_for_creds # ask for encryption info
+prompt_for_rclone # ask for rclone info
 misc # miscellaneous prep work
 MSG="bashrc updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
