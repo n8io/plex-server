@@ -12,7 +12,6 @@ apt_install() {
   apt-get install -y \
     glances \
     screen \
-    git \
     sqlite \
     >/dev/null \
     ;
