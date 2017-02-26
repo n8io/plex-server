@@ -21,9 +21,8 @@ LOG_DIR="${5:-$DEF_LOG_DIR}"
 LOG_FILE="${LOG_DIR}/${6:-$DEF_LOG_FILE}"
 
 # echo -n "Unmounting..." | "$TEE_BIN" -a "$LOG_FILE"
-log_info "Unmounting..." "$LOG_FILE" "-n"
+log_info "Unmounting..." "$LOG_FILE"
 "$FUSERMOUNT_BIN" -uz "$ENC_DIR_LOCAL" 2>/dev/null || true
-log_info "done" "$LOG_FILE"
 # echo "done." | "$TEE_BIN" -a "$LOG_FILE"
 
 # echo "Mounting..." | "$TEE_BIN" -a "$LOG_FILE"

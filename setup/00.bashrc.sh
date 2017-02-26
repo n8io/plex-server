@@ -143,7 +143,7 @@ export \\
   ;
 
 log_msg() {
-  echo "\$4" "\$(date) \${1}: \${2}" | "\${TEE_BIN:-/usr/bin/tee}" -a "\${3:-/plex-server/logs/default.log}"
+  echo -e "\$(date) \${1}: \${2}" | "\${TEE_BIN:-/usr/bin/tee}" -a "\${3:-/plex-server/logs/default.log}"
 }
 
 log_error() {
