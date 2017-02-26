@@ -7,7 +7,7 @@ TEE_BIN="/usr/bin/tee"
 LOG_FILE="${PLEX_CODE_DIR}/logs/mount-check.log"
 COUNT=$(find "${DEC_DIR_LOCAL}" -maxdepth 1 -type d | wc -l)
 
-if [ "$COUNT" -eq "0" ]; then
+if [ "$COUNT" -eq "1" ]; then
   echo "$(date) CRITICAL: Drives are not mounted. Need to remount!" | "$TEE_BIN" -a "$LOG_FILE"
   "${PLEX_CODE_DIR}/scripts/cycle-mount.sh"
 else
