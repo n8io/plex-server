@@ -109,9 +109,9 @@ echo -n "  Writing new plex settings to ${BASHRC}..."
 cat <<EOT >> "$BASHRC"
 #plex-settings-start
 
-. "${PLEX_CODE_DIR}/.env"
-. "${PLEX_CODE_DIR}/scripts/helper-functions.sh"
-cd "$PLEX_CODE_DIR"
+. "/plex-server/.env"
+. "/plex-server/scripts/helper-functions.sh"
+cd "/plex-server"
 
 #plex-settings-end
 EOT
