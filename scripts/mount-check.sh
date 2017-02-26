@@ -10,11 +10,12 @@ COUNT=$(find "${DEC_DIR_LOCAL}" -maxdepth 1 -type d | wc -l)
 if [ "$COUNT" -eq "1" ]; then
   echo "$(date) CRITICAL: Drives are not mounted. Need to remount!" | "$TEE_BIN" -a "$LOG_FILE"
   "${PLEX_CODE_DIR}/scripts/cycle-mount.sh"
+  sleep 2
 
   RECOUNT=$(find "${DEC_DIR_LOCAL}" -maxdepth 1 -type d | wc -l)
 
   if [ "$RECOUNT" -eq "1" ]; then
-    echo "$(date) FATAL: Drives could not be remounted. Check the logs!" | "$TEE_BIN" -a "$LOG_FILE"
+    echo "$(date)    FATAL: Drives could not be remounted. Check the logs!" | "$TEE_BIN" -a "$LOG_FILE"
   else
     echo "$(date)     INFO: Drives mounted successfully. Everything is back to normal." | "$TEE_BIN" -a "$LOG_FILE"
   fi
