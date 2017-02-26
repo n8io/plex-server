@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-PARENT_DIR="$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"
+DIR="$(dirname $0)"
+PLEX_CODE_DIR=$(dirname "$DIR")
 
 write_job() {
   EXISTS=$(crontab -l | grep -q "${2}" && echo 1 || echo 0)
@@ -15,9 +16,9 @@ write_job() {
 }
 
 echo "Cron jobs updating..."
-write_job "*/5 * * * *" "${PARENT_DIR}/scripts/mount-check.sh" # Check every 5 minutes that things are mounted
-write_job "1 8 * * *" "${PARENT_DIR}/scripts/logs-cleanup.sh" # ~3:01am Eastern
-write_job "2 9 * * *" "${PARENT_DIR}/scripts/cycle-mount.sh" # ~4:02am Eastern
+write_job "*/5 * * * *" "${PLEX_CODE_DIR}/scripts/mount-check.sh" # Check every 5 minutes that things are mounted
+write_job "1 8 * * *" "${PLEX_CODE_DIR}/scripts/logs-cleanup.sh" # ~3:01am Eastern
+write_job "2 9 * * *" "${PLEX_CODE_DIR}/scripts/cycle-mount.sh" # ~4:02am Eastern
 MSG="Cron jobs updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
 

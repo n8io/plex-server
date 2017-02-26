@@ -2,7 +2,8 @@
 set -e
 
 BASHRC="/root/.bashrc"
-PLEX_CODE_DIR=$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+DIR="$(dirname $0)"
+PLEX_CODE_DIR=$(dirname "$DIR")
 ENV_FILE="${PLEX_CODE_DIR}/.env"
 
 PREV_REMOTE_DIR="${ENC_DIR_REMOTE:-/encrypted}"
@@ -146,7 +147,9 @@ echo "done."
 }
 
 misc() {
-  mkdir -p "${PLEX_CODE_DIR}/logs"
+  mkdir -p
+    "${PLEX_CODE_DIR}/logs" \
+
   touch "${PLEX_CODE_DIR}/logs/rclone-mount.log"
   touch "${PLEX_CODE_DIR}/logs/mount-check.log"
 }
