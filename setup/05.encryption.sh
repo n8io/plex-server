@@ -5,7 +5,7 @@ set -e
 unmount_encryption() {
   echo -n "  Unmounting encrypted dir..."
   fusermount -uz "$DEC_DIR_LOCAL" 2>/dev/null
-  umount -l "$DEC_DIR_LOCAL"
+  umount -l "$DEC_DIR_LOCAL" 2>/dev/null
   echo "done."
 }
 
