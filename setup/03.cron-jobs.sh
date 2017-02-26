@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT=$(realpath $0)
-PLEX_CODE_DIR=$(dirname $SCRIPT)
+PLEX_CODE_DIR=$(dirname $(dirname $SCRIPT))
 
 write_job() {
   EXISTS=$(crontab -l | grep -q "${2}" && echo 1 || echo 0)
