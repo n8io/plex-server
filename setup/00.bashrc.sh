@@ -143,12 +143,13 @@ EOT
 
 chmod a+x "$ENV_FILE"
 
+mkdir -p "${MOUNT_DIR}/encrypted" "${MOUNT_DIR}/decrypted"
+
 echo "done."
 }
 
 misc() {
-  mkdir -p
-    "${PLEX_CODE_DIR}/logs" \
+  mkdir -p "${PLEX_CODE_DIR}/logs"
 
   touch "${PLEX_CODE_DIR}/logs/rclone-mount.log"
   touch "${PLEX_CODE_DIR}/logs/mount-check.log"
