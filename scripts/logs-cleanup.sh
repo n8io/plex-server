@@ -11,3 +11,4 @@ empty_log_file() {
 
 empty_log_file "rclone-mount.log"
 empty_log_file "mount-check.log"
+empty_log_file "cron.log"
