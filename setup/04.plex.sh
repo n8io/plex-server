@@ -2,7 +2,7 @@
 set -e
 
 plex_install() {
-  bash -c "$(wget -qO - https://raw.githubusercontent.com/mrworf/plexupdate/master/extras/installer.sh)"
+  bash -c "$(wget -qO - https://raw.githubusercontent.com/mrworf/plexupdate/master/extras/installer.sh)" || true
 }
 
 update_sqlite() {

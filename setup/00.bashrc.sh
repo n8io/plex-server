@@ -20,7 +20,7 @@ prompt_for_creds() {
 
   MSG="${MSG}: "
   echo -n "$MSG"
-  read ENCFS_PWD
+  read -s ENCFS_PWD
 
   MSG="  Paste in your encryption config"
   if [ -f "$PREV_ENCFS6_CONFIG" ]; then
@@ -34,6 +34,7 @@ prompt_for_creds() {
   do
     ENCFS_CONFIG_DATA+=$c
   done
+  echo ""
 
   ENCFS_CONFIG_DATA=$(echo -e "$ENCFS_CONFIG_DATA" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
@@ -83,6 +84,7 @@ prompt_for_rclone() {
   do
     RCLONE_CONFIG_DATA+=$c
   done
+  echo ""
 
   RCLONE_CONFIG_DATA=$(echo -e "$RCLONE_CONFIG_DATA" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
