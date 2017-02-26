@@ -12,8 +12,8 @@ mkdir -p "$LOGS_DIR"
 
 echo "$(date)" > "$LOG_FILE"
 
-echo "Unmounting..." >> "$LOG_FILE"
+echo "Killing last screen session..." >> "$LOG_FILE"
 "$SCREEN_BIN" -ls | grep ".rclone-mount" | cut -d. -f1 | awk '{print $1}' | xargs kill 2>/dev/null || true
 
-echo "Mounting..." >> "$LOG_FILE"
+echo "Starting up new screen session..." | t "$LOG_FILE"
 "$SCREEN_BIN" -S rclone-mount -dm "${PLEX_CODE_DIR}/scripts/mount.sh"

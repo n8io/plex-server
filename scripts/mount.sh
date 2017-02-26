@@ -51,4 +51,6 @@ echo ""$RCLONE_BIN" mount \
   --quiet \
   --stats 0 \
   "${RCLONE_REMOTE_NAME}:${ENC_DIR_REMOTE}/" \
-  "$ENC_DIR_LOCAL" | tee -a "$LOG_FILE"
+  "$ENC_DIR_LOCAL" | tee -a "$LOG_FILE" \
+  & \
+  ;
