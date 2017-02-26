@@ -28,10 +28,12 @@ prompt_for_creds() {
   MSG="${MSG}: "
   echo -n "$MSG"
   IFS= read -d '' -n 1 ENCFS_CONFIG_DATA
-  while IFS= read -d '' -n 1 -t 2 c
+  while IFS= read -d '' -n 1 -t 1 c
   do
     ENCFS_CONFIG_DATA+=$c
   done
+
+  ENCFS_CONFIG_DATA=$(echo "$ENCFS_CONFIG_DATA" | xargs)
 
   if [ ! -z "$ENCFS_PWD" ]; then
     echo "$ENCFS_PWD" > "$PREV_ENCFS_CREDS"
