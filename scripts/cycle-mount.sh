@@ -13,7 +13,7 @@ SCREEN_BIN="/usr/bin/screen"
 TEE_BIN="/usr/bin/tee"
 XARGS_BIN="/usr/bin/xargs"
 
-"$ENV_BIN" | "$GREP_BIN" ENC | "$TEE_BIN" -a "/plex-server/logs/rclone-mount.log"
+"$ENV_BIN" | "$GREP_BIN" ENC | "$TEE_BIN" -a "${PLEX_CODE_DIR}/logs/rclone-mount.log"
 
 DEF_PLEX_CODE_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "$PLEX_CODE_DIR" || echo "/plex-server")"
 DEF_LOGS_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "${PLEX_CODE_DIR}/logs" || echo "${DEF_PLEX_CODE_DIR}/logs")"

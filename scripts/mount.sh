@@ -7,7 +7,7 @@ FUSERMOUNT_BIN="/bin/fusermount"
 GREP_BIN="/bin/grep"
 TEE_BIN="/usr/bin/tee"
 
-"$ENV_BIN" | "$GREP_BIN" ENC | "$TEE_BIN" -a "/plex-server/logs/rclone-mount.log"
+"$ENV_BIN" | "$GREP_BIN" ENC | "$TEE_BIN" -a "${PLEX_CODE_DIR}/logs/rclone-mount.log"
 
 DEF_RCLONE_BIN="$([ ! -z "$RCLONE_BIN" ] && echo "$RCLONE_BIN" || /usr/sbin/rclone)"
 DEF_RCLONE_REMOTE_NAME="$([ ! -z "$RCLONE_REMOTE_NAME" ] && echo "$RCLONE_REMOTE_NAME" || "$RCLONE_BIN" listremotes | head -n 1 | sed -e 's/\(:\)*$//g')"

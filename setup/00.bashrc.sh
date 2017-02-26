@@ -81,8 +81,8 @@ echo -n "  Writing new plex settings to ${BASHRC}..."
 cat <<EOT >> "$BASHRC"
 #plex-settings-start
 
-source "${PLEX_CODE_DIR}/.env"
-source "${PLEX_CODE_DIR}/scripts/helper-functions.sh"
+. "${PLEX_CODE_DIR}/.env"
+. "${PLEX_CODE_DIR}/scripts/helper-functions.sh"
 cd "$PLEX_CODE_DIR"
 
 #plex-settings-end
@@ -116,12 +116,17 @@ EOT
 chmod a+x "$ENV_FILE"
 
 echo "done."
+}
 
+misc() {
+  mkdir -p "${PLEX_CODE_DIR}/logs"
+  touch "${PLEX_CODE_DIR}/logs/rclone-mount.log"
 }
 
 echo "bashrc updating..."
 prompt_for_settings # ask for settings
 prompt_for_creds # ask for encryption info
+misc # miscellaneous prep work
 MSG="bashrc updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
 
