@@ -17,7 +17,7 @@ if [ "$COUNT" -eq "1" ]; then
   RECOUNT=$("$FIND_BIN" "$DEC_DIR_LOCAL" -maxdepth 1 -type d | wc -l)
 
   if [ "$RECOUNT" -eq "1" ]; then
-    log_fatal "Drives could not be remounted. Check the logs!" "$LOG_FILE"
+    log_fatal "Drives could not be remounted!" "$LOG_FILE"
   else
     log_info "Drives mounted successfully. Everything is back to normal." "$LOG_FILE"
   fi
