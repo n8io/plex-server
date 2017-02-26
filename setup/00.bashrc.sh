@@ -28,17 +28,10 @@ prompt_for_creds() {
   MSG="${MSG}: "
   echo -n "$MSG"
   IFS= read -d '' -n 1 ENCFS_CONFIG_DATA
-  while IFS= read -d '' -n 1 -t 2 c
+  while IFS= read -d '' -n 1 -t 1 c
   do
     ENCFS_CONFIG_DATA+=$c
   done
-
-  echo -n "  Enter the path to where you want everything to be mounted [${PREV_MOUNT_DIR}]: "
-  read MOUNT_DIR
-  echo -n "  Enter the path to your ENCFS encryption password file [${PREV_ENCFS_CREDS}]: "
-  read ENCFS_CREDS
-  echo -n "  Enter the path to your ENCFS encryption config file [${PREV_ENCFS6_CONFIG}]: "
-  read ENCFS6_CONFIG
 
   if [ ! -z "$ENCFS_PWD" ]; then
     echo "$ENCFS_PWD" > "$PREV_ENCFS_CREDS"
