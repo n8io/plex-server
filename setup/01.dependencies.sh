@@ -10,6 +10,7 @@ apt_update() {
 apt_install() {
   echo -n "  Installing dependencies..."
   apt-get install -y \
+    unzip \
     glances \
     screen \
     sqlite \
@@ -29,9 +30,9 @@ rclone_install() {
   curl -O -s "${RCLONE_VERSION_BASE}/${RCLONE_VERSION}.zip" >/dev/null &&
   unzip -oq "${RCLONE_VERSION}.zip" > /dev/null &&
   cd rclone-*-linux-amd64 &&
-  cp rclone /usr/bin/ &&
-  chown root:root /usr/bin/rclone &&
-  chmod 755 /usr/bin/rclone &&
+  cp rclone /usr/sbin/ &&
+  chown root:root /usr/sbin/rclone &&
+  chmod 755 /usr/sbin/rclone &&
   rm -rf /rclone-*
   echo "done."
 }
