@@ -5,6 +5,7 @@ A hand full of scripts to setup your Plex Media Server and keep it running smoot
 
 1. Clone this repo
 ```
+apt-get install -y git
 cd / && git clone https://github.com/n8io/plex-server.git && cd plex-server
 ```
 2. Initialize
