@@ -1,4 +1,8 @@
 #!/bin/sh
+. /root/.bashrc
+
+env | grep ENC | tee -a "/plex-server/logs/rclone-mount.log"
+
 SCREEN_BIN="/usr/bin/screen"
 DEF_PLEX_CODE_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "$PLEX_CODE_DIR" || echo "/plex-server")"
 DEF_LOGS_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "${PLEX_CODE_DIR}/logs" || echo "${DEF_PLEX_CODE_DIR}/logs")"
