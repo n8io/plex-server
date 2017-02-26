@@ -10,6 +10,55 @@ PREV_ENCFS_CREDS="${ENCFS_CREDS:-/.encfs}"
 PREV_ENCFS6_CONFIG="${ENCFS6_CONFIG:-/encfs.xml}"
 
 prompt_for_creds() {
+  MSG="Enter your encryption password"
+
+  if [ -f "$PREV_ENCFS_CREDS" ]; then
+    MSG="${MSG} or hit enter to use existing [use existing]"
+  fi
+
+  MSG="${MSG}: "
+  echo -n "$MSG"
+  read ENCFS_PWD
+
+  MSG="Paste in your encryption config"
+  if [ -f "$PREV_ENCFS6_CONFIG" ]; then
+    MSG="${MSG} or hit enter to use existing [use existing]: "
+  fi
+
+  IFS= read -d '' -n 1 ENCFS_CONFIG_DATA
+  while IFS= read -d '' -n 1 -t 2 c
+  do
+    ENCFS_CONFIG_DATA+=$c
+  done
+
+  echo -n "  Enter the path to where you want everything to be mounted [${PREV_MOUNT_DIR}]: "
+  read MOUNT_DIR
+  echo -n "  Enter the path to your ENCFS encryption password file [${PREV_ENCFS_CREDS}]: "
+  read ENCFS_CREDS
+  echo -n "  Enter the path to your ENCFS encryption config file [${PREV_ENCFS6_CONFIG}]: "
+  read ENCFS6_CONFIG
+
+  if [ ! -z "$ENCFS_PWD" ]; then
+    echo "$ENCFS_PWD" > "$PREV_ENCFS_CREDS"
+  fi
+
+  if [ ! -z "$ENCFS_CONFIG_DATA" ]; then
+    echo "$ENCFS_CONFIG_DATA" > "$PREV_ENCFS6_CONFIG"
+  fi
+
+  wipe_old # remove previous settings
+  # write new values
+  write_bashrc \
+    "${ENC_DIR_REMOTE:-${PREV_REMOTE_DIR}}" \
+    "${ENCFS_CREDS:-${PREV_ENCFS_CREDS}}" \
+    "${ENCFS6_CONFIG:-${PREV_ENCFS6_CONFIG}}" \
+    "${MOUNT_DIR:-${PREV_MOUNT_DIR}}" \
+    ;
+
+  return 0
+}
+
+prompt_for_settings() {
   echo -n "  Enter your Amazon Cloud Drive encrypted directory [${PREV_REMOTE_DIR}]: "
   read ENC_DIR_REMOTE
   echo -n "  Enter the path to where you want everything to be mounted [${PREV_MOUNT_DIR}]: "
@@ -71,7 +120,8 @@ echo "done."
 }
 
 echo "bashrc updating..."
-prompt_for_creds # ask for custom paths
+prompt_for_settings # ask for settings
+prompt_for_creds # ask for encryption info
 MSG="bashrc updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
 

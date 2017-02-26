@@ -7,3 +7,4 @@ set -e
 "./setup/02.os-settings.sh"
 "./setup/03.cron-jobs.sh"
 "./setup/04.plex.sh"
+"./setup/05.encryption.sh"

@@ -1,6 +1,6 @@
 #!/bin/sh
-DEF_PLEX_CODE_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "$PLEX_CODE_DIR" || echo "/root/plex-server/scripts")"
-DEF_LOGS_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "${PLEX_CODE_DIR}/logs" || echo "/root/plex-server/logs")"
+DEF_PLEX_CODE_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "$PLEX_CODE_DIR" || echo "/plex-server/scripts")"
+DEF_LOGS_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "${PLEX_CODE_DIR}/logs" || echo "/plex-server/logs")"
 DEF_LOG_FILE="rclone-mount.log"
 
 PLEX_CODE_DIR="${1:-$DEF_PLEX_CODE_DIR}"
