@@ -21,6 +21,7 @@ prompt_for_creds() {
   MSG="${MSG}: "
   echo -n "$MSG"
   read -s ENCFS_PWD
+  echo ""
 
   MSG="  Paste in your encryption config"
   if [ -f "$PREV_ENCFS6_CONFIG" ]; then
