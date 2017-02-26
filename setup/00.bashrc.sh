@@ -48,15 +48,6 @@ prompt_for_creds() {
     echo "$ENCFS_CONFIG_DATA" > "$PREV_ENCFS6_CONFIG"
   fi
 
-  wipe_old # remove previous settings
-  # write new values
-  write_bashrc \
-    "${ENC_DIR_REMOTE:-${PREV_REMOTE_DIR}}" \
-    "${ENCFS_CREDS:-${PREV_ENCFS_CREDS}}" \
-    "${ENCFS6_CONFIG:-${PREV_ENCFS6_CONFIG}}" \
-    "${MOUNT_DIR:-${PREV_MOUNT_DIR}}" \
-    ;
-
   return 0
 }
 
