@@ -5,15 +5,11 @@ PLEX_CODE_DIR=$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
 AWK_BIN="/usr/bin/awk"
 CUT_BIN="/usr/bin/cut"
 DATE_BIN="/bin/date"
-ENV_BIN="/usr/bin/env"
 GREP_BIN="/bin/grep"
 KILL_BIN="/bin/kill"
-MKDIR_BIN="/bin/mkdir"
 SCREEN_BIN="/usr/bin/screen"
 TEE_BIN="/usr/bin/tee"
 XARGS_BIN="/usr/bin/xargs"
-
-"$ENV_BIN" | "$GREP_BIN" ENC | "$TEE_BIN" -a "${PLEX_CODE_DIR}/logs/rclone-mount.log"
 
 DEF_PLEX_CODE_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "$PLEX_CODE_DIR" || echo "/plex-server")"
 DEF_LOGS_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "${PLEX_CODE_DIR}/logs" || echo "${DEF_PLEX_CODE_DIR}/logs")"
@@ -22,8 +18,6 @@ DEF_LOG_FILE="rclone-mount.log"
 PLEX_CODE_DIR="${1:-$DEF_PLEX_CODE_DIR}"
 LOGS_DIR="${2:-$DEF_LOGS_DIR}"
 LOG_FILE="${LOGS_DIR}/${3:-$DEF_LOG_FILE}"
-
-"$MKDIR_BIN" -p "$LOGS_DIR"
 
 "$DATE_BIN" > "$LOG_FILE"
 
