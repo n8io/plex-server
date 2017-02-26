@@ -1,5 +1,6 @@
 #!/bin/bash
-PLEX_CODE_DIR=$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLEX_CODE_DIR=$(dirname "$DIR")
 . "${PLEX_CODE_DIR}/.env"
 
 empty_log_file() {
