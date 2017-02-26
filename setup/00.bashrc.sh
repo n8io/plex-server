@@ -143,7 +143,7 @@ EOT
 
 chmod a+x "$ENV_FILE"
 
-mkdir -p "${MOUNT_DIR}/encrypted" "${MOUNT_DIR}/decrypted"
+mkdir -p "${4}/encrypted" "${4}/decrypted"
 
 echo "done."
 }
