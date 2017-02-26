@@ -1,7 +1,12 @@
 #!/bin/bash
 . /root/.bashrc
 
-env | grep ENC | tee -a "/plex-server/logs/rclone-mount.log"
+ENV_BIN="/usr/bin/env"
+FUSERMOUNT_BIN="/bin/fusermount"
+GREP_BIN="/usr/bin/grep"
+TEE_BIN="/usr/bin/tee"
+
+"$ENV_BIN" | "$GREP_BIN" ENC | "$TEE_BIN" -a "/plex-server/logs/rclone-mount.log"
 
 DEF_RCLONE_BIN="$([ ! -z "$RCLONE_BIN" ] && echo "$RCLONE_BIN" || /usr/sbin/rclone)"
 DEF_RCLONE_REMOTE_NAME="$([ ! -z "$RCLONE_REMOTE_NAME" ] && echo "$RCLONE_REMOTE_NAME" || "$RCLONE_BIN" listremotes | head -n 1 | sed -e 's/\(:\)*$//g')"
@@ -19,11 +24,11 @@ LOG_FILE="${LOG_DIR}/${6:-$DEF_LOG_FILE}"
 
 mkdir -p "$LOG_DIR"
 
-echo -n "Unmounting... " | tee -a "$LOG_FILE"
-fusermount -uz "$ENC_DIR_LOCAL" 2>/dev/null || true
-echo "done." | tee -a "$LOG_FILE"
+echo -n "Unmounting... " | "$TEE_BIN" -a "$LOG_FILE"
+"$FUSERMOUNT_BIN" -uz "$ENC_DIR_LOCAL" 2>/dev/null || true
+echo "done." | "$TEE_BIN" -a "$LOG_FILE"
 
-echo "Mounting..." | tee -a "$LOG_FILE"
+echo "Mounting..." | "$TEE_BIN" -a "$LOG_FILE"
 
 "$RCLONE_BIN" mount \
   --read-only \
@@ -36,5 +41,5 @@ echo "Mounting..." | tee -a "$LOG_FILE"
   --quiet \
   --stats 0 \
   "${RCLONE_REMOTE_NAME}:${ENC_DIR_REMOTE}/" \
-  "$ENC_DIR_LOCAL" | tee -a "$LOG_FILE" \
+  "$ENC_DIR_LOCAL" | "$TEE_BIN" -a "$LOG_FILE" \
   ;
