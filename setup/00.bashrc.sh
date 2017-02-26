@@ -28,7 +28,7 @@ prompt_for_creds() {
   MSG="${MSG}: "
   echo -n "$MSG"
   IFS= read -d '' -n 1 ENCFS_CONFIG_DATA
-  while IFS= read -d '' -n 1 -t 1 c
+  while IFS= read -d '' -n 1 -t 2 c
   do
     ENCFS_CONFIG_DATA+=$c
   done
