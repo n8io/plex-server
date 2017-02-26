@@ -147,7 +147,7 @@ log_msg() {
 }
 
 log_error() {
-  log_msg "\e[31ERROR\e[0m" "\$1" "\$2" "\$3"
+  log_msg "\e[31mERROR\e[0m" "\$1" "\$2" "\$3"
 }
 
 log_info() {
