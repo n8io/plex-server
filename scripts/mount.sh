@@ -25,6 +25,19 @@ LOG_FILE=${LOG_FILE}" >> "$LOG_FILE"
 echo "Unmounting... " >> "$LOG_FILE"
 fusermount -uz "$ENC_DIR_LOCAL" 2>/dev/null || true
 
+echo ""$RCLONE_BIN" mount \
+  --read-only \
+  --allow-non-empty \
+  --allow-other \
+  --buffer-size 1G \
+  --max-read-ahead 14G \
+  --acd-templink-threshold 0 \
+  --checkers 16 \
+  --quiet \
+  --stats 0 \
+  "${RCLONE_REMOTE_NAME}:${ENC_DIR_REMOTE}/" \
+  "$ENC_DIR_LOCAL" | tee -a "$LOG_FILE"" >> "$LOG_FILE"
+
 "$RCLONE_BIN" mount \
   --read-only \
   --allow-non-empty \
