@@ -3,7 +3,7 @@
 
 ENV_BIN="/usr/bin/env"
 FUSERMOUNT_BIN="/bin/fusermount"
-GREP_BIN="/usr/bin/grep"
+GREP_BIN="/bin/grep"
 TEE_BIN="/usr/bin/tee"
 
 "$ENV_BIN" | "$GREP_BIN" ENC | "$TEE_BIN" -a "/plex-server/logs/rclone-mount.log"
