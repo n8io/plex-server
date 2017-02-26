@@ -15,7 +15,9 @@ write_job() {
 }
 
 echo "Cron jobs updating..."
-write_job "0 8 * * *" "${PARENT_DIR}/scripts/cycle-mount.sh" # ~4am Eastern
+write_job "*/5 * * * *" "${PARENT_DIR}/scripts/mount-check.sh" # Check every 5 minutes that things are mounted
+write_job "1 8 * * *" "${PARENT_DIR}/scripts/logs-cleanup.sh" # ~3:01am Eastern
+write_job "2 9 * * *" "${PARENT_DIR}/scripts/cycle-mount.sh" # ~4:02am Eastern
 MSG="Cron jobs updated successfully."; \
 echo -e "\e[32m${MSG}\e[0m"
 

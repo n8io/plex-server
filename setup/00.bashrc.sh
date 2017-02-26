@@ -121,6 +121,7 @@ echo "done."
 misc() {
   mkdir -p "${PLEX_CODE_DIR}/logs"
   touch "${PLEX_CODE_DIR}/logs/rclone-mount.log"
+  touch "${PLEX_CODE_DIR}/logs/mount-check.log"
 }
 
 echo "bashrc updating..."
