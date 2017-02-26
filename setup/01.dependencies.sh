@@ -11,6 +11,7 @@ apt_install() {
   echo -n "  Installing dependencies..."
   apt install -y \
     glances \
+    screen \
     git \
     sqlite \
     >/dev/null \
