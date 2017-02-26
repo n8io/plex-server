@@ -9,6 +9,7 @@ unmount() {
 mount_encrypted() {
   echo -n "  Mounting encrypted dir..."
   "${PLEX_CODE_DIR}/scripts/cycle-mount.sh"
+  sleep 3
   echo "done."
 }
 
@@ -20,7 +21,7 @@ unmount_decrypted() {
 
 mount_decrypted() {
   echo -n "  Mounting decrypted dir..."
-  cat "$ENCFS_CREDS" | "$ENCFS_BIN" -S "$ENC_DIR_LOCAL" "$DEC_DIR_LOCAL" -- -o allow_other
+  cat "$ENCFS_CREDS" | "$ENCFS_BIN" -S -o allow_other "$ENC_DIR_LOCAL" "$DEC_DIR_LOCAL"
   echo "done."
 }
 
