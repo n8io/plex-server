@@ -1,6 +1,6 @@
 #!/bin/sh
 SCRIPT=$(realpath $0)
-PLEX_CODE_DIR=$(dirname $SCRIPT)
+PLEX_CODE_DIR=$(dirname $(dirname $SCRIPT))
 . "${PLEX_CODE_DIR}/.env"
 
 AWK_BIN="/usr/bin/awk"

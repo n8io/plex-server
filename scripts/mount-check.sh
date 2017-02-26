@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 SCRIPT=$(realpath $0)
-PLEX_CODE_DIR=$(dirname $SCRIPT)
+PLEX_CODE_DIR=$(dirname $(dirname $SCRIPT))
 . "${PLEX_CODE_DIR}/.env"
 
 TEE_BIN="/usr/bin/tee"
