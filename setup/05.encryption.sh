@@ -7,7 +7,7 @@ unmount() {
 
 mount_encrypted() {
   echo -n "  Mounting encrypted dir..."
-  "${PLEX_CODE_DIR}/scripts/cycle-mount.sh"
+  QUIET=1; "${PLEX_CODE_DIR}/scripts/cycle-mount.sh"
   sleep 2
   echo "done."
 }
