@@ -9,7 +9,7 @@ ssh -i ~/.ssh/id_rsa -L 32400:localhost:32400 root@<your.pms.public.ip>
 ```
 1. Clone this repo
 ```
-apt-get install -y git
+apt-get install -y git && \
 cd / && git clone https://github.com/n8io/plex-server.git && cd plex-server
 ```
 1. Initialize

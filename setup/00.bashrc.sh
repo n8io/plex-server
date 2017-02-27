@@ -28,10 +28,12 @@ prompt_for_creds() {
   MSG="  Paste in your encryption config"
   if [ -f "$PREV_ENCFS6_CONFIG" ]; then
     MSG="${MSG} or hit enter to use existing [existing]"
+  else
+    MSG="${MSG} (hint: the contents of /encfs.xml from your processing server)"
   fi
 
   MSG="${MSG}: "
-  echo -n "$MSG"
+  echo "$MSG"
   IFS= read -d '' -n 1 ENCFS_CONFIG_DATA
   while IFS= read -d '' -n 1 -t 1 c
   do
@@ -79,10 +81,12 @@ prompt_for_rclone() {
   MSG="  Paste in your rclone config"
   if [ -f "$PREV_RCLONE_CONFIG" ]; then
     MSG="${MSG} or hit enter to use existing [existing]"
+  else
+    MSG="${MSG} (hint: the contents of ~/.rclone.conf from your processing server)"
   fi
 
   MSG="${MSG}: "
-  echo -n "$MSG"
+  echo "$MSG"
   IFS= read -d '' -n 1 RCLONE_CONFIG_DATA
   while IFS= read -d '' -n 1 -t 1 c
   do
