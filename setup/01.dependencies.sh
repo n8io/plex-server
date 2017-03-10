@@ -10,6 +10,8 @@ apt_update() {
 apt_install() {
   echo -n "  Installing dependencies..."
   apt-get install -y \
+    curl \
+    screen \
     unzip \
     glances \
     screen \
@@ -36,7 +38,6 @@ rclone_install() {
   rm -rf /rclone-*
   echo "done."
 }
-
 
 echo "Updating dependencies..."
 apt_update # update the server in general
