@@ -17,6 +17,7 @@ write_job() {
 }
 
 echo "Cron jobs updating..."
+write_job "@reboot" "${PLEX_CODE_DIR}/setup/05.encryption.sh" # only on reboot do we remount encrypted dir
 write_job "*/3 * * * *" "${PLEX_CODE_DIR}/scripts/mount-check.sh" # Check every 3 minutes that things are mounted
 write_job "1 8 * * *" "${PLEX_CODE_DIR}/scripts/logs-cleanup.sh" # ~3:01am Eastern
 write_job "2 9 * * *" "${PLEX_CODE_DIR}/scripts/cycle-mount.sh" # ~4:02am Eastern

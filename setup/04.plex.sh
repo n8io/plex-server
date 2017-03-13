@@ -25,7 +25,7 @@ update_sqlite() {
 plex_custom_scanner_install() {
   echo -n "  Installing additional media scanners..."
   TMP_DIR="/temp/empa"; \
-  PLEX_PLUGINS_DIR="/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-ins"; \
+  PLEX_PLUGINS_DIR="${PLEX_PLUGINS_DIR:-/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-ins}"; \
   wget -q -P "${TMP_DIR}/" "https://bitbucket.org/mjarends/extendedpersonalmedia-agent.bundle/get/master.zip" && \
   unzip -qq -o "${TMP_DIR}/master.zip" -d "$TMP_DIR" && \
   mv ${TMP_DIR}/mjarends-extendedpersonalmedia-agent.bundle-* "${TMP_DIR}/ExtendedPersonalMedia-Agent.bundle" && \
