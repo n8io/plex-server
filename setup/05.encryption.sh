@@ -14,7 +14,7 @@ mount_encrypted() {
 
 unmount_decrypted() {
   echo -n "  Unmounting decrypted dir..."
-  unmount "$DEC_DIR_LOCAL"
+  umount "$DEC_DIR_LOCAL"
   echo "done."
 }
 
