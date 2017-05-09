@@ -29,7 +29,7 @@ rclone_install() {
   RCLONE_VERSION="rclone-beta-latest-linux-amd64"
   echo -n "  Installing rclone..."
   cd / &&
-  curl -O -s "${RCLONE_VERSION_BASE}/${RCLONE_VERSION}.zip" >/dev/null &&
+  curl -O -s -L "${RCLONE_VERSION_BASE}/${RCLONE_VERSION}.zip" >/dev/null &&
   unzip -oq "${RCLONE_VERSION}.zip" > /dev/null &&
   cd rclone-*-linux-amd64 &&
   cp rclone /usr/sbin/ &&
