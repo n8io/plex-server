@@ -23,19 +23,24 @@ apt_install() {
 }
 
 rclone_install() {
-  # RCLONE_VERSION_BASE="http://downloads.rclone.org"
-  RCLONE_VERSION_BASE="http://beta.rclone.org/"
-  # RCLONE_VERSION="rclone-current-linux-amd64"
-  RCLONE_VERSION="rclone-beta-latest-linux-amd64"
-  echo -n "  Installing rclone..."
-  cd / &&
-  curl -O -s -L "${RCLONE_VERSION_BASE}/${RCLONE_VERSION}.zip" >/dev/null &&
-  unzip -oq "${RCLONE_VERSION}.zip" > /dev/null &&
-  cd rclone-*-linux-amd64 &&
-  cp rclone /usr/sbin/ &&
-  chown root:root /usr/sbin/rclone &&
-  chmod 755 /usr/sbin/rclone &&
-  rm -rf /rclone-*
+  # Latest stable release, checksum-verified against rclone's published sums.
+  RCLONE_BASE="https://downloads.rclone.org"
+  RCLONE_VERSION="$(curl -fsSL "${RCLONE_BASE}/version.txt" | sed 's/^rclone //')"
+  RCLONE_ZIP="rclone-${RCLONE_VERSION}-linux-amd64.zip"
+  TMP_DIR="$(mktemp -d)"
+  echo -n "  Installing rclone ${RCLONE_VERSION}..."
+  cd "$TMP_DIR" &&
+  curl -fsSL -o "$RCLONE_ZIP" "${RCLONE_BASE}/${RCLONE_VERSION}/${RCLONE_ZIP}" &&
+  curl -fsSL -o SHA256SUMS "${RCLONE_BASE}/${RCLONE_VERSION}/SHA256SUMS" &&
+  grep -q "^$(sha256sum "$RCLONE_ZIP" | cut -d' ' -f1)  ${RCLONE_ZIP}\$" SHA256SUMS &&
+  unzip -oq "$RCLONE_ZIP" &&
+  install -o root -g root -m 755 "rclone-${RCLONE_VERSION}-linux-amd64/rclone" /usr/sbin/rclone ||
+  { echo "failed (download or checksum mismatch)"; rm -rf "$TMP_DIR"; exit 1; }
+  cd / && rm -rf "$TMP_DIR"
+  # rclone >= 1.60 execs `fusermount3`; hosts with only FUSE 2 need a shim.
+  if ! command -v fusermount3 >/dev/null 2>&1 && command -v fusermount >/dev/null 2>&1; then
+    ln -sf "$(command -v fusermount)" /usr/local/bin/fusermount3
+  fi
   echo "done."
 }
 
