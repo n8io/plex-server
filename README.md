@@ -16,3 +16,13 @@ cd / && git clone https://github.com/n8io/plex-server.git && cd plex-server
 ```
 ./install.sh
 ```
+
+## Day-to-day scripts
+
+All run from `/plex-server` on the server (root's shell starts there).
+
+| Script | What it does |
+|---|---|
+| `scripts/plex-scan.sh -t alone` | Scan just one show/movie folder into Plex — fuzzy name match, `-t`/`-m` to limit to TV or movies, `-f` to also refresh metadata, `-n` dry run, `-l` list matches. Works for media Plex hasn't seen yet. |
+| `scripts/cache-status.sh [path]` | Show which media is cached on local disk by rclone (`100%` = plays without touching the cloud). |
+| `scripts/cycle-mount.sh` | Remount the cloud drive (rclone) — what the nightly cron and `mount-check.sh` use. |
