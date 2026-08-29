@@ -2,3 +2,4 @@ logs
 *.log
 .env
 configs
+.temp
