@@ -37,9 +37,10 @@ rclone_install() {
   install -o root -g root -m 755 "rclone-${RCLONE_VERSION}-linux-amd64/rclone" /usr/sbin/rclone ||
   { echo "failed (download or checksum mismatch)"; rm -rf "$TMP_DIR"; exit 1; }
   cd / && rm -rf "$TMP_DIR"
-  # rclone >= 1.60 execs `fusermount3`; hosts with only FUSE 2 need a shim.
+  # rclone >= 1.60 execs `fusermount3` via PATH; hosts with only FUSE 2 need a
+  # shim. Put it in /usr/bin so cron's minimal PATH (/usr/bin:/bin) finds it too.
   if ! command -v fusermount3 >/dev/null 2>&1 && command -v fusermount >/dev/null 2>&1; then
-    ln -sf "$(command -v fusermount)" /usr/local/bin/fusermount3
+    ln -sf "$(command -v fusermount)" /usr/bin/fusermount3
   fi
   echo "done."
 }

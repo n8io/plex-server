@@ -6,6 +6,9 @@ PLEX_CODE_DIR="$(dirname "$(dirname "$SCRIPT")")"
 FUSERMOUNT_BIN="/bin/fusermount"
 TEE_BIN="/usr/bin/tee"
 
+# cron runs with PATH=/usr/bin:/bin; rclone execs `fusermount3` via PATH.
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 # Requires rclone >= 1.60 (VFS full cache). rclone >= 1.60 also expects a
 # `fusermount3` binary; on FUSE 2-only hosts symlink it to /bin/fusermount.
 DEF_RCLONE_BIN="$([ ! -z "$RCLONE_BIN" ] && echo "$RCLONE_BIN" || echo "/usr/sbin/rclone")"
