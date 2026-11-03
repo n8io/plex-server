@@ -7,7 +7,7 @@
 # Keeps the last 3 here on mirrored disk; monitor/pull-backup.sh copies them
 # off the box every night. Writes the time of the last good run for
 # update-status.sh.
-set -euo pipefail
+set -eo pipefail  # no -u: .env's log helpers use unset positional args
 SCRIPT="$(realpath "$0")"
 PLEX_CODE_DIR="$(dirname "$(dirname "$SCRIPT")")"
 . "${PLEX_CODE_DIR}/.env"
