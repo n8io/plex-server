@@ -69,6 +69,7 @@ scripts/
   mount-check.sh           are the mounts readable? if not, cycle them
   logs-cleanup.sh          nightly log truncation
   plex-scan.sh (+ .py)     scan one show/movie folder into Plex, fuzzy by name
+  upload-scan.sh           nzb2's forced SSH command: queue uploaded files, scan each folder once it appears
   cache-status.sh          what's on local disk, per file, in decrypted names
   helper-functions.sh      encode/decode filenames with encfsctl (sourced by .bashrc)
 addons/
