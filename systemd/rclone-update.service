@@ -1,0 +1,7 @@
+[Unit]
+Description=Install a newer rclone and move the mounts onto it when idle
+
+[Service]
+Type=oneshot
+ExecStart=@PLEX_CODE_DIR@/scripts/update-rclone.sh
+TimeoutStartSec=7h

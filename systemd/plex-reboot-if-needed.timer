@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly check for a pending reboot (after the nightly updates)
+
+[Timer]
+# ~4:20am Eastern; unattended-upgrades runs earlier in the night.
+OnCalendar=*-*-* 09:20 UTC
+Persistent=false
+
+[Install]
+WantedBy=timers.target

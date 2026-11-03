@@ -21,24 +21,6 @@ plex_install() {
   echo "done."
 }
 
-# Security updates for the OS, plus Plex from its repo, install unattended.
-auto_updates() {
-  echo -n "  Turning on automatic updates..."
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq unattended-upgrades >/dev/null
-  cat <<'EOT' > /etc/apt/apt.conf.d/51plex-unattended
-Unattended-Upgrade::Origins-Pattern {
-  "origin=Ubuntu,archive=${distro_codename}-security";
-  "site=repo.plex.tv";
-};
-// Reboots are manual: a reboot drops every stream.
-Unattended-Upgrade::Automatic-Reboot "false";
-EOT
-  cat <<'EOT' > /etc/apt/apt.conf.d/20auto-upgrades
-APT::Periodic::Update-Package-Lists "1";
-APT::Periodic::Unattended-Upgrade "1";
-EOT
-  echo "done."
-}
 
 # Legacy agent for libraries without standard metadata. Only needed if a
 # library still uses it.
@@ -59,7 +41,6 @@ plex_custom_scanner_install() {
 
 echo "Plex Media Server installing..."
 plex_install # plex
-auto_updates # OS security + Plex updates
 [ "${INSTALL_EXTENDED_AGENT:-0}" = "1" ] && plex_custom_scanner_install
 MSG="Plex Media Server installed successfully. Sign in at http://localhost:32400/web, then run setup/06.plex-settings.sh."; \
 echo -e "\e[32m${MSG}\e[0m"

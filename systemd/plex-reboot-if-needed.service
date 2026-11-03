@@ -1,0 +1,6 @@
+[Unit]
+Description=Reboot for pending updates if nobody is streaming
+
+[Service]
+Type=oneshot
+ExecStart=@PLEX_CODE_DIR@/scripts/reboot-if-needed.sh
