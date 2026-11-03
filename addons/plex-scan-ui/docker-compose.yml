@@ -1,0 +1,15 @@
+# Add to the compose stack that runs Plex (same network so http://plex:32400 resolves).
+services:
+  plex-scan-ui:
+    build: .
+    container_name: plex-scan-ui
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"   # or LAN/Tailscale IP; put a reverse proxy in front for remote use
+    environment:
+      PLEX_URL: http://plex:32400  # Plex service/container name
+      PLEX_TOKEN: ${PLEX_TOKEN:-}  # or use PLEX_USERNAME/PLEX_PASSWORD instead
+      PLEX_USERNAME: ${PLEX_USERNAME:-}
+      PLEX_PASSWORD: ${PLEX_PASSWORD:-}
+      UI_USER: ${UI_USER:?set UI_USER}
+      UI_PASS: ${UI_PASS:?set UI_PASS}

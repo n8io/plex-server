@@ -1,0 +1,18 @@
+[Unit]
+Description=Plex Scan UI
+After=network.target plexmediaserver.service
+
+[Service]
+EnvironmentFile=/opt/plex-scan-ui/.env
+ExecStart=/usr/bin/node /opt/plex-scan-ui/server.js
+WorkingDirectory=/opt/plex-scan-ui
+User=plexscan
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

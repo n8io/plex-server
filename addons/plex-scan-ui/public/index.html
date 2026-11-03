@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plex Scan</title>
+<style>
+:root { --bg:#f6f6f4; --card:#fff; --fg:#1d1d1b; --muted:#6b6b66; --line:#e3e2dc; --accent:#c98a00; --ok:#2e7d32; --err:#c62828; }
+@media (prefers-color-scheme: dark) { :root { --bg:#141413; --card:#1e1e1c; --fg:#ecebe6; --muted:#9a9890; --line:#2e2e2b; --accent:#e5a00d; --ok:#66bb6a; --err:#ef5350; } }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.4 system-ui, sans-serif; }
+main { max-width:860px; margin:0 auto; padding:16px; }
+h1 { font-size:20px; margin:0 0 12px; }
+nav { display:flex; flex-wrap:wrap; gap:4px; align-items:center; color:var(--muted); margin-bottom:12px; }
+nav a { color:var(--accent); cursor:pointer; text-decoration:none; }
+.bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+input[type=search] { flex:1; min-width:160px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--fg); }
+button { padding:7px 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--fg); cursor:pointer; white-space:nowrap; }
+button.primary { background:var(--accent); border-color:var(--accent); color:#141413; font-weight:600; }
+button:disabled { opacity:.5; cursor:default; }
+ul { list-style:none; margin:0; padding:0; background:var(--card); border:1px solid var(--line); border-radius:10px; }
+li { display:flex; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--line); }
+li:first-child { border-top:0; }
+li .name { flex:1; min-width:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+li .name.leaf { cursor:default; }
+li small { color:var(--muted); }
+.pager { display:flex; justify-content:space-between; align-items:center; margin-top:8px; color:var(--muted); }
+#log { margin-top:16px; font:12px/1.5 ui-monospace, monospace; white-space:pre-wrap; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px; max-height:240px; overflow:auto; }
+#log:empty { display:none; }
+.ok { color:var(--ok); } .err { color:var(--err); }
+#activity { color:var(--muted); font-size:13px; min-height:18px; margin-bottom:8px; }
+label { color:var(--muted); font-size:13px; display:flex; gap:4px; align-items:center; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Plex Scan</h1>
+  <nav id="crumbs"></nav>
+  <div id="activity"></div>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Filter by title" hidden>
+    <button id="folders" hidden title="Browse folders on disk (for new shows/movies Plex doesn't know yet)">Folders</button>
+    <label title="Also re-fetch metadata for the item (not used for whole libraries)"><input id="meta" type="checkbox"> refresh metadata</label>
+    <button id="scanHere" class="primary">Scan this level</button>
+  </div>
+  <ul id="list"></ul>
+  <div class="pager" id="pager" hidden><button id="prev">Prev</button><span id="range"></span><button id="next">Next</button></div>
+  <div id="log"></div>
+</main>
+<script>
+const PAGE = 100;
+const $ = (id) => document.getElementById(id);
+// stack of levels: {label, section, ratingKey?, kind:'root'|'library'|'item', leaf?}
+let stack = [{ label: 'Libraries', kind: 'root' }];
+let start = 0, filter = '';
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.status);
+  return data;
+}
+const log = (msg, cls = '') => { const el = $('log'); el.insertAdjacentHTML('afterbegin', `<div class="${cls}">${new Date().toLocaleTimeString()} ${esc(msg)}</div>`); };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const cur = () => stack[stack.length - 1];
+
+function label(m) {
+  if (m.type === 'season') return m.title;
+  if (m.type === 'episode') return `${String(m.index ?? '').padStart(2, '0')}. ${m.title}`;
+  return m.year ? `${m.title} (${m.year})` : m.title;
+}
+function meta(m) {
+  if (m.type === 'show') return `${m.childCount ?? '?'} seasons · ${m.leafCount ?? '?'} eps`;
+  if (m.type === 'season') return `${m.leafCount ?? '?'} eps`;
+  return m.type;
+}
+
+function renderCrumbs() {
+  $('crumbs').innerHTML = stack.map((s, i) => i === stack.length - 1 ? `<span>${esc(s.label)}</span>` : `<a data-i="${i}">${esc(s.label)}</a> /`).join(' ');
+  $('crumbs').querySelectorAll('a').forEach((a) => a.onclick = () => { stack = stack.slice(0, +a.dataset.i + 1); start = 0; filter = ''; $('q').value = ''; load(); });
+  $('scanHere').hidden = cur().kind === 'root';
+  $('q').hidden = cur().kind !== 'library';
+  $('folders').hidden = cur().kind !== 'library';
+}
+
+function row(name, sub, onOpen, scanArgs) {
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="name ${onOpen ? '' : 'leaf'}">${esc(name)} <small>${esc(sub)}</small></span><button>Scan</button>`;
+  if (onOpen) li.querySelector('.name').onclick = onOpen;
+  li.querySelector('button').onclick = (e) => doScan(scanArgs, name, e.target);
+  return li;
+}
+
+async function load() {
+  renderCrumbs();
+  const list = $('list'), c = cur();
+  list.innerHTML = '<li><small>Loading…</small></li>';
+  $('pager').hidden = true;
+  try {
+    let rows = [];
+    if (c.kind === 'root') {
+      const libs = await api('/api/libraries');
+      rows = libs.map((l) => row(l.title, `${l.type} · ${l.paths.join(', ')}`,
+        () => { stack.push({ label: l.title, kind: 'library', section: l.key }); start = 0; load(); },
+        { sectionId: l.key }));
+    } else if (c.kind === 'library') {
+      const p = new URLSearchParams({ section: c.section, start, size: PAGE });
+      if (filter) p.set('title', filter);
+      const { total, items } = await api('/api/items?' + p);
+      rows = items.map(itemRow);
+      $('pager').hidden = total <= PAGE;
+      $('range').textContent = `${start + 1}–${Math.min(start + PAGE, total)} of ${total}`;
+      $('prev').disabled = start === 0; $('next').disabled = start + PAGE >= total;
+    } else if (c.kind === 'folder' && !c.path) {
+      const lib = (await api('/api/libraries')).find((l) => l.key === c.section);
+      rows = lib.paths.map((p) => folderRow({ path: p, title: p }));
+    } else if (c.kind === 'folder') {
+      rows = (await api('/api/folders?path=' + encodeURIComponent(c.path))).map(folderRow);
+    } else {
+      rows = (await api('/api/children?ratingKey=' + c.ratingKey)).map(itemRow);
+    }
+    list.replaceChildren(...rows);
+    if (!rows.length) list.innerHTML = '<li><small>Nothing here</small></li>';
+  } catch (e) { list.innerHTML = `<li class="err">${esc(e.message)}</li>`; }
+}
+
+function itemRow(m) {
+  const canOpen = m.type === 'show' || m.type === 'season' || m.type === 'artist' || m.type === 'album';
+  return row(label(m), meta(m),
+    canOpen ? () => { stack.push({ label: label(m), kind: 'item', ratingKey: m.ratingKey, section: cur().section }); load(); } : null,
+    { ratingKey: m.ratingKey });
+}
+
+function folderRow(f) {
+  const section = cur().section;
+  return row(f.title, '', () => { stack.push({ label: f.title, kind: 'folder', section, path: f.path }); load(); },
+    { sectionId: section, path: f.path });
+}
+
+async function doScan(args, name, btn) {
+  if (args.path) return doScanPath(args, name, btn);
+  if (args.sectionId && !args.ratingKey && !confirm(`Scan the whole "${name}" library?`)) return;
+  btn.disabled = true;
+  try {
+    const { results } = await api('/api/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...args, refreshMetadata: $('meta').checked }) });
+    for (const r of results) log(`${r.ok ? '✓' : '✗'} ${name}: ${r.path}${r.error ? ' — ' + r.error : ''}`, r.ok ? 'ok' : 'err');
+    pollActivity();
+  } catch (e) { log(`✗ ${name}: ${e.message}`, 'err'); }
+  finally { btn.disabled = false; }
+}
+
+async function doScanPath(args, name, btn) {
+  btn.disabled = true;
+  try {
+    const { results } = await api('/api/scan-path', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(args) });
+    for (const r of results) log(`✓ ${r.path}`, 'ok');
+    pollActivity();
+  } catch (e) { log(`✗ ${name}: ${e.message}`, 'err'); }
+  finally { btn.disabled = false; }
+}
+
+$('folders').onclick = () => { stack.push({ label: 'Folders', kind: 'folder', section: cur().section }); load(); };
+$('scanHere').onclick = (e) => {
+  const c = cur();
+  if (c.kind === 'folder') return c.path ? doScanPath({ sectionId: c.section, path: c.path }, c.label, e.target) : doScan({ sectionId: c.section }, 'library', e.target);
+  doScan(c.kind === 'library' ? { sectionId: c.section } : { ratingKey: c.ratingKey }, c.label, e.target);
+};
+$('prev').onclick = () => { start = Math.max(0, start - PAGE); load(); };
+$('next').onclick = () => { start += PAGE; load(); };
+let t; $('q').oninput = (e) => { clearTimeout(t); t = setTimeout(() => { filter = e.target.value.trim(); start = 0; load(); }, 300); };
+
+let polling = false;
+async function pollActivity() {
+  if (polling) return; polling = true;
+  try {
+    for (let i = 0; i < 120; i++) {
+      const acts = (await api('/api/activity')).filter((a) => /scan|refresh/i.test(a.type + a.title));
+      $('activity').textContent = acts.map((a) => `${a.title}${a.subtitle ? ' · ' + a.subtitle : ''} ${a.progress ?? ''}%`).join('  |  ');
+      if (!acts.length && i > 1) break;
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  } catch { /* activity is best-effort */ }
+  $('activity').textContent = ''; polling = false;
+}
+
+load();
+</script>
+</body>
+</html>
