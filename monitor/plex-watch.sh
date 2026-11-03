@@ -10,6 +10,7 @@ CONFIG="${PLEX_WATCH_CONFIG:-$HOME/.config/plex-watch.env}"
 # shellcheck source=/dev/null
 . "$CONFIG"
 PLEX_CODE_DIR="${PLEX_CODE_DIR:-/plex-server}"
+export PLEX_EXPECTED="${PLEX_EXPECTED:-1}"   # 0 while Plex is intentionally off (before a cutover)
 
 notify() {
   /usr/bin/python3 -c 'import json,sys; print(json.dumps({"text": sys.argv[1]}))' "$1" |
@@ -22,7 +23,7 @@ STATUS="$(ssh -o BatchMode=yes -o ConnectTimeout=20 "$PLEX_HOST" "${PLEX_CODE_DI
 }
 
 PROBLEMS="$(/usr/bin/python3 - "$STATUS" <<'EOF'
-import json, sys
+import json, os, sys
 s = json.loads(sys.argv[1])
 now, day = s["now"], 86400
 out = []
@@ -34,10 +35,27 @@ if s["reboot_required_since"] and now - s["reboot_required_since"] > 7 * day:
     out.append("a reboot has been pending for %d days (always busy at 4am?)" % ((now - s["reboot_required_since"]) // day))
 if not s["mounts_ok"]:
     out.append("media mounts aren't readable")
-if not s["plex_ok"]:
+if not s["plex_ok"] and os.environ.get("PLEX_EXPECTED", "1") == "1":
     out.append("Plex isn't answering")
 if s.get("pro_attached") == "false":
     out.append("Ubuntu Pro isn't attached (no ESM / Livepatch)")
+if s.get("raid_ok") is False:
+    out.append("a disk mirror is degraded (a drive dropped out)")
+if s.get("disks_ok") is False:
+    out.append("an NVMe drive reports SMART errors")
+if s.get("disk_wear_pct", 0) >= 80:
+    out.append("NVMe wear at %d%%; plan a drive swap" % s["disk_wear_pct"])
+for k, name in (("root_used_pct", "/"), ("home_used_pct", "/home (cache)")):
+    if s.get(k, 0) >= (95 if k == "home_used_pct" else 85):
+        out.append("%s is %d%% full" % (name, s[k]))
+if s.get("drive_errors", 0) > 20:
+    out.append("%d Google Drive auth/quota errors in today's rclone log" % s["drive_errors"])
+if s.get("last_backup") is not None and now - s["last_backup"] > 2 * day and os.environ.get("PLEX_EXPECTED", "1") == "1":
+    out.append("no good Plex backup in %d days" % ((now - s["last_backup"]) // day))
+if s.get("git_dirty"):
+    out.append("server setup has local edits not in GitHub (drift)")
+if s.get("git_behind"):
+    out.append("server isn't on the latest GitHub commit for its branch")
 print("\n".join("- " + p for p in out))
 EOF
 )" || { notify ":warning: Plex server: couldn't read its status: ${STATUS:0:200}"; exit 0; }

@@ -11,6 +11,7 @@ set -e
 "./setup/07.tailscale.sh"
 "./setup/08.lockdown.sh"
 "./setup/09.auto-updates.sh"
+"./setup/10.backups.sh"
 
 echo
 echo "Next: sign in to Plex at http://localhost:32400/web (SSH tunnel, see README),"

@@ -1,0 +1,8 @@
+[Unit]
+Description=Nightly Plex database and config backup
+
+[Service]
+Type=oneshot
+Nice=10
+IOSchedulingClass=idle
+ExecStart=@PLEX_CODE_DIR@/scripts/backup-plex.sh
