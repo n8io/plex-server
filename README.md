@@ -29,8 +29,12 @@ flowchart LR
   minute (`--poll-interval 1m`).
 - EncFS mounts on top of that and presents plain filenames and content at
   `$DEC_DIR_LOCAL`. Plex's libraries point there.
-- Cron keeps the mount healthy (`mount-check.sh` every few minutes), recycles it
-  nightly (`cycle-mount.sh`), and remounts everything at boot.
+- systemd runs both layers (`rclone-media`, then `encfs-media` bound to it),
+  brings them up at boot, and restarts them if they die; Plex starts after
+  them so it never scans an empty folder. A second, uncached rclone mount
+  (`rclone-photos`) serves the workout videos at `$PHOTOS_DIR_LOCAL`.
+- Cron runs `mount-check.sh` every 5 minutes to catch a mount that hangs
+  without dying.
 
 ## Layout
 
@@ -39,19 +43,29 @@ install.sh                 runs the setup/ steps in order
 setup/
   00.bashrc.sh             interactive: writes .env, stores EncFS/rclone creds, hooks root's .bashrc
   01.dependencies.sh       apt packages, latest stable rclone (checksum-verified), fusermount3 shim
-  02.os-settings.sh        network/sysctl tuning for many concurrent streams
-  03.cron-jobs.sh          installs the cron schedule (idempotent)
-  04.plex.sh               installs Plex (via plexupdate), extra media agent, sqlite cache tweak
-  05.encryption.sh         mounts rclone, then EncFS on top (also the @reboot job)
+  02.os-settings.sh        sysctl tuning in /etc/sysctl.d/90-plex.conf (BBR, TCP buffers)
+  03.cron-jobs.sh          installs the cron schedule (idempotent, removes retired jobs)
+  04.plex.sh               Plex from its official apt repo, unattended OS + Plex updates
+  05.encryption.sh         installs and starts the systemd mount units
+  06.plex-settings.sh      applies Plex's server settings via its API and reads them back
+  07.tailscale.sh          joins the tailnet, serves Plex Scan UI to it
+systemd/
+  rclone-media.service     rclone mount of the encrypted media (Type=notify)
+  encfs-media.service      EncFS on top; stops and restarts with rclone-media
+  rclone-photos.service    rclone mount of the workout videos
+  plexmediaserver-override.conf   Plex waits for the mounts; TimeoutStopSec=600
+  plex-scan-ui.service     hardened unit for the Scan UI
 scripts/
-  mount.sh                 the rclone mount command (all flags live here)
-  cycle-mount.sh           kill + restart the mount inside a detached screen session
-  mount-check.sh           is the decrypted tree readable? if not, cycle the mount
+  mount.sh                 the rclone mount command (all flags live here): mount.sh media|photos
+  encfs-mount.sh           the EncFS command
+  cycle-mount.sh           restart a mount through systemd: cycle-mount.sh [media|photos]
+  mount-check.sh           are the mounts readable? if not, cycle them
   logs-cleanup.sh          nightly log truncation
   plex-scan.sh (+ .py)     scan one show/movie folder into Plex, fuzzy by name
   cache-status.sh          what's on local disk, per file, in decrypted names
   helper-functions.sh      encode/decode filenames with encfsctl (sourced by .bashrc)
 addons/
+  plex-scan-ui/ (+ .sh)    web page to scan one show/season/movie; .sh installs it
   plexpy.sh                install PlexPy (now Tautulli) as a systemd service
   extended-personal-media-scanner.sh   scanner for libraries without standard metadata
 ```
@@ -102,6 +116,16 @@ important variables:
 | `ENCFS_CREDS` / `ENCFS6_CONFIG` | EncFS password file / config | `/.encfs`, `/encfs.xml` |
 | `RCLONE_BIN` | rclone binary | `/usr/sbin/rclone` |
 | `RCLONE_CACHE_DIR` / `RCLONE_CACHE_MAX_SIZE` | local media cache (optional overrides) | `/home/rclone-cache`, `800G` |
+| `PHOTOS_DIR_REMOTE` / `PHOTOS_DIR_LOCAL` | workout videos mount (optional overrides) | `/_/decrypted/workouts`, `/photos/Workouts` |
+
+### Disk layout
+
+The cache is disposable (it refills from the cloud), so it doesn't need RAID.
+On a two-drive box, mirror only a small OS + Plex partition (~100 GB) and give
+the rest of both drives to the cache (RAID 0 or one cache partition per drive
+via separate mounts), then point `RCLONE_CACHE_DIR` at it. Cache size is what
+decides how often plays hit the cloud; keep `RCLONE_CACHE_MAX_SIZE` ~10% under
+the partition size.
 
 `.env` also defines `log_info` / `log_error` / `log_fatal`, which write to
 `logs/*.log`.
@@ -112,13 +136,13 @@ Installed by `03.cron-jobs.sh` (won't duplicate entries on re-run):
 
 | When | Job | Why |
 |---|---|---|
-| `@reboot` | `setup/05.encryption.sh` | bring up rclone + EncFS after a restart |
-| every 3 min | `scripts/mount-check.sh` | remount if the decrypted tree is empty |
+| every 5 min | `scripts/mount-check.sh` | restart a mount that hangs without dying |
 | daily 08:01 UTC | `scripts/logs-cleanup.sh` | truncate logs |
-| daily 09:02 UTC | `scripts/cycle-mount.sh` | fresh rclone process every day |
 
-Plex itself updates through [plexupdate](https://github.com/mrworf/plexupdate),
-which `04.plex.sh` installs; schedule it once (e.g. `30 6 * * * /opt/plexupdate/plexupdate.sh --config /etc/plexupdate.conf`).
+There is no nightly mount restart any more: it cut live streams and caused
+cache read errors right after it ran, and the mounts weren't failing. Boot-time
+mounting is systemd's job. Plex and OS security updates arrive through
+`unattended-upgrades` (`04.plex.sh`); reboots stay manual.
 
 ## Day-to-day
 
@@ -164,9 +188,10 @@ title, read it once: `cat "/mnt/x/decrypted/movies/release/Dune (2021)/"*.mkv > 
 
 ```
 scripts/mount-check.sh        # health check (what cron runs); logs to logs/mount-check.log
-scripts/cycle-mount.sh        # restart the rclone mount; EncFS stays mounted on top
-setup/05.encryption.sh        # full remount of both layers
-tail -f logs/rclone-mount-debug.log
+scripts/cycle-mount.sh        # restart rclone + EncFS (systemctl restart rclone-media)
+scripts/cycle-mount.sh photos # restart the workout videos mount
+systemctl status rclone-media encfs-media rclone-photos
+tail -f logs/rclone-media.log
 ```
 
 `helper-functions.sh` (sourced into root's shell) gives you `encode <path>` and
@@ -179,16 +204,22 @@ tail -f logs/rclone-mount-debug.log
   possible, prefer text subtitles (image subtitles force a transcode), and have
   viewers enable Direct Play/Direct Stream and "Original" remote quality in their
   apps.
-- `02.os-settings.sh` raises TCP buffers and file-descriptor limits for many
-  simultaneous connections.
-- Plex's transcoder temp directory should be `/dev/shm` (RAM).
+- `02.os-settings.sh` switches TCP to BBR and lets buffers grow for long-distance
+  streams. It no longer sets web-server tuning (file-max, TIME_WAIT, 16 MB
+  per-socket defaults): on a modern kernel those were lower than the defaults or
+  wasted memory.
+- `06.plex-settings.sh` turns off Plex jobs that read whole files from the cloud
+  (thumbnails, loudness/music analysis, ad markers), moves transcodes to
+  `/dev/shm`, and raises the database cache to 1 GB. Each setting is commented
+  with why.
 - The first play of a file is limited by the cloud provider's per-file download
   speed; subsequent plays and seeks come from the local cache.
 
 ## Rollback and recovery
 
-- **Mount problems** — `scripts/cycle-mount.sh`, then `setup/05.encryption.sh`
-  if EncFS also dropped. `mount-check.sh` does the first automatically.
+- **Mount problems** — `scripts/cycle-mount.sh` (EncFS restarts with rclone);
+  `journalctl -u rclone-media -u encfs-media` shows why. `mount-check.sh` and
+  systemd do the restart automatically.
 - **rclone upgrade regret** — install the previous binary at `$RCLONE_BIN` and
   cycle the mount; the cache directory can simply be deleted.
 - **Plex data** — Plex keeps rolling copies of its database in
@@ -202,12 +233,12 @@ tail -f logs/rclone-mount-debug.log
   with "executable file not found", that's why.
 - Plex's data directory is set by `PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR` in
   the systemd unit. Never edit `/lib/systemd/system/plexmediaserver.service`
-  directly — `.deb` upgrades overwrite it. Put overrides in
-  `/etc/systemd/system/plexmediaserver.service.d/override.conf`
-  (`TimeoutStopSec=600` there is also a good idea: Plex can take minutes to
-  checkpoint a large database on stop, and a SIGKILL mid-write corrupts it).
-- `mount.sh` uses `--allow-non-empty` so a lazily-unmounted directory doesn't
-  block the remount; a stale mount therefore looks like an empty tree, which is
-  what `mount-check.sh` tests for.
+  directly — `.deb` upgrades overwrite it. Overrides live in
+  `systemd/plexmediaserver-override.conf`, installed by `05.encryption.sh`
+  (`TimeoutStopSec=600`: Plex can take minutes to checkpoint a large database
+  on stop, and a SIGKILL mid-write corrupts it).
+- `mount.sh` no longer passes `--allow-non-empty`: mounting over leftover files
+  hid failed unmounts. If a mount fails with "directory not empty", something
+  wrote into the mount point while it was down; clear it and cycle the mount.
 - The rclone mount is read-only by design. Plex features that write next to the
   media (Optimize, subtitle downloads into the media folder) won't work.
