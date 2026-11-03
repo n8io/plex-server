@@ -50,12 +50,18 @@ setup/
   06.plex-settings.sh      applies Plex's server settings via its API and reads them back
   07.tailscale.sh          joins the tailnet, serves Plex Scan UI to it
   08.lockdown.sh           keys-only SSH; firewall allows only Plex (32400), SSH and the tailnet
+  09.auto-updates.sh       Ubuntu Pro, unattended upgrades, idle-only reboots, monthly rclone
 systemd/
   rclone-media.service     rclone mount of the encrypted media (Type=notify)
   encfs-media.service      EncFS on top; stops and restarts with rclone-media
   rclone-photos.service    rclone mount of the workout videos
   plexmediaserver-override.conf   Plex waits for the mounts; TimeoutStopSec=600
   plex-scan-ui.service     hardened unit for the Scan UI
+  plex-reboot-if-needed.*  nightly reboot only when needed and nobody is streaming
+  rclone-update.*          monthly rclone update
+monitor/
+  plex-watch.sh            off-box daily check; Slack DM only on problems
+  install-macos.sh         installs plex-watch.sh as a launchd job
 scripts/
   mount.sh                 the rclone mount command (all flags live here): mount.sh media|photos
   encfs-mount.sh           the EncFS command
@@ -215,6 +221,31 @@ tail -f logs/rclone-media.log
   with why.
 - The first play of a file is limited by the cloud provider's per-file download
   speed; subsequent plays and seeks come from the local cache.
+
+## Staying up to date (hands-off)
+
+`09.auto-updates.sh` sets this up; nothing here needs a person.
+
+| What | How | When |
+|---|---|---|
+| Ubuntu security fixes | `unattended-upgrades` (+ ESM with Ubuntu Pro) | nightly |
+| Kernel fixes | Livepatch (Ubuntu Pro), no reboot | as released |
+| Plex, Tailscale | their apt repos via `unattended-upgrades` | nightly |
+| rclone | `rclone-update.timer`: checksum-verified, mounts move to it when idle | monthly |
+| Reboots | `plex-reboot-if-needed.timer`: only if needed and 0 streams | nightly ~4:20am ET |
+| Tautulli | updates itself | as released |
+
+Ubuntu Pro (free for personal use, up to 5 machines) extends 24.04's security
+fixes to 2034, so no release upgrade is needed for this box's lifetime. Attach
+it with `UBUNTU_PRO_TOKEN=... setup/09.auto-updates.sh` (token from
+https://ubuntu.com/pro/dashboard).
+
+**Watching it:** `monitor/plex-watch.sh` runs daily on another machine
+(`monitor/install-macos.sh` for a Mac) and sends a Slack DM only when something
+is wrong: updates stalled for 3 days, security fixes waiting, a reboot pending
+over a week, mounts unreadable, Plex down, or Pro detached. Its config lives in
+`~/.config/plex-watch.env` (`PLEX_HOST`, `SLACK_WEBHOOK_URL`) on that machine.
+`scripts/update-status.sh` on the server prints the same status as JSON.
 
 ## Access and lockdown
 
