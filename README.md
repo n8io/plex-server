@@ -49,6 +49,7 @@ setup/
   05.encryption.sh         installs and starts the systemd mount units
   06.plex-settings.sh      applies Plex's server settings via its API and reads them back
   07.tailscale.sh          joins the tailnet, serves Plex Scan UI to it
+  08.lockdown.sh           keys-only SSH; firewall allows only Plex (32400), SSH and the tailnet
 systemd/
   rclone-media.service     rclone mount of the encrypted media (Type=notify)
   encfs-media.service      EncFS on top; stops and restarts with rclone-media
@@ -66,7 +67,7 @@ scripts/
   helper-functions.sh      encode/decode filenames with encfsctl (sourced by .bashrc)
 addons/
   plex-scan-ui/ (+ .sh)    web page to scan one show/season/movie; .sh installs it
-  plexpy.sh                install PlexPy (now Tautulli) as a systemd service
+  tautulli.sh              Tautulli stream history, tailnet only (https://<node>:8443)
   extended-personal-media-scanner.sh   scanner for libraries without standard metadata
 ```
 
@@ -214,6 +215,19 @@ tail -f logs/rclone-media.log
   with why.
 - The first play of a file is limited by the cloud provider's per-file download
   speed; subsequent plays and seeks come from the local cache.
+
+## Access and lockdown
+
+Only Plex (32400/tcp) is public. `08.lockdown.sh` turns off SSH passwords
+(it refuses if root has no authorized key) and enables a firewall that also
+allows SSH and anything arriving over Tailscale. Plex Scan UI
+(`https://<node>.<tailnet>.ts.net`) and Tautulli (`:8443`) bind to localhost
+and are served to the tailnet by `tailscale serve`.
+
+Once `ssh root@<tailscale name>` works, close public SSH:
+`SSH_TAILSCALE_ONLY=1 setup/08.lockdown.sh`. If you ever lock yourself out,
+boot OVH's rescue mode from the control panel, then `ufw disable` and remove
+`/etc/ssh/sshd_config.d/90-plex.conf` on the mounted disk.
 
 ## Rollback and recovery
 
