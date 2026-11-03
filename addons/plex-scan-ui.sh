@@ -20,7 +20,7 @@ fi
 id "$APP_USER" >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin "$APP_USER"
 
 echo -n "  Copying app to ${APP_DIR}..."
-mkdir -p "${APP_DIR}/public"
+install -d -m 755 "$APP_DIR" "${APP_DIR}/public"
 install -m 644 "${PLEX_CODE_DIR}/addons/plex-scan-ui/server.js" "${APP_DIR}/server.js"
 install -m 644 "${PLEX_CODE_DIR}/addons/plex-scan-ui/public/index.html" "${APP_DIR}/public/index.html"
 echo "done."
