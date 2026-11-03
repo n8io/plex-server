@@ -1,25 +1,19 @@
-#!/bin/sh
+#!/bin/bash
+# Restart the media mounts. EncFS restarts with rclone (PartOf=rclone-media).
+#
+#   cycle-mount.sh          media (rclone + EncFS)
+#   cycle-mount.sh photos   the workout videos mount
 SCRIPT="$(realpath "$0")"
 PLEX_CODE_DIR="$(dirname "$(dirname "$SCRIPT")")"
 . "${PLEX_CODE_DIR}/.env"
 
-AWK_BIN="/usr/bin/awk"
-CUT_BIN="/usr/bin/cut"
-GREP_BIN="/bin/grep"
-KILL_BIN="/bin/kill"
-SCREEN_BIN="/usr/bin/screen"
-XARGS_BIN="/usr/bin/xargs"
+LOG_FILE="${PLEX_CODE_DIR}/logs/mount-check.log"
 
-DEF_PLEX_CODE_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "$PLEX_CODE_DIR" || echo "/plex-server")"
-DEF_LOGS_DIR="$([ ! -z "$PLEX_CODE_DIR" ] && echo "${PLEX_CODE_DIR}/logs" || echo "${DEF_PLEX_CODE_DIR}/logs")"
-DEF_LOG_FILE="rclone-mount.log"
+case "${1:-media}" in
+  media)  UNIT="rclone-media.service" ;;
+  photos) UNIT="rclone-photos.service" ;;
+  *) echo "usage: cycle-mount.sh [media|photos]" >&2; exit 2 ;;
+esac
 
-PLEX_CODE_DIR="${2:-$DEF_PLEX_CODE_DIR}"
-LOGS_DIR="${3:-$DEF_LOGS_DIR}"
-LOG_FILE="${LOGS_DIR}/${4:-$DEF_LOG_FILE}"
-
-[ -z "$1" ] && log_info "Killing last screen session..." "$LOG_FILE"
-"$SCREEN_BIN" -ls | "$GREP_BIN" ".rclone-mount" | "$CUT_BIN" -d. -f1 | "$AWK_BIN" '{print $1}' | "$XARGS_BIN" "$KILL_BIN" 2>/dev/null || true
-
-[ -z "$1" ] && log_info "Starting up new screen session..." "$LOG_FILE"
-"$SCREEN_BIN" -S rclone-mount -dm "${PLEX_CODE_DIR}/scripts/mount.sh"
+log_info "Restarting ${UNIT}..." "$LOG_FILE"
+systemctl restart "$UNIT"

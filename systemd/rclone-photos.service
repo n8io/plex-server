@@ -1,0 +1,15 @@
+[Unit]
+Description=rclone mount of the workout videos
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+ExecStart=@PLEX_CODE_DIR@/scripts/mount.sh photos
+ExecStop=/bin/fusermount3 -uz @PHOTOS_DIR_LOCAL@
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

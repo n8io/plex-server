@@ -1,28 +1,35 @@
 #!/bin/bash
-set -e
+# Watchdog for a mount that is still running but no longer answers (systemd
+# already restarts one that dies). Cron runs this every 5 minutes.
 SCRIPT="$(realpath "$0")"
 PLEX_CODE_DIR="$(dirname "$(dirname "$SCRIPT")")"
 . "${PLEX_CODE_DIR}/.env"
 
-FIND_BIN="/usr/bin/find"
-SLEEP_BIN="/bin/sleep"
 LOG_FILE="${PLEX_CODE_DIR}/logs/mount-check.log"
-COUNT=$("$FIND_BIN" "$DEC_DIR_LOCAL" -maxdepth 1 -type d | wc -l)
+PHOTOS_DIR_LOCAL="${PHOTOS_DIR_LOCAL:-/photos/Workouts}"
 
-if [ "$COUNT" -eq "1" ]; then
-  log_error "Drives are not mounted. Attempting to remount..." "$LOG_FILE"
-  "${PLEX_CODE_DIR}/scripts/cycle-mount.sh"
-  "$SLEEP_BIN" 5
+# A mounted tree has at least one entry; a hung FUSE mount times out.
+is_readable() {
+  [ -n "$(timeout 30 find "$1" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]
+}
 
-  RECOUNT=$("$FIND_BIN" "$DEC_DIR_LOCAL" -maxdepth 1 -type d | wc -l)
-
-  if [ "$RECOUNT" -eq "1" ]; then
-    log_fatal "Drives could not be remounted!" "$LOG_FILE"
-  else
-    log_info "Drives mounted successfully. Everything is back to normal." "$LOG_FILE"
+check() {
+  NAME="$1"; DIR="$2"
+  if is_readable "$DIR"; then
+    log_info "${NAME}: mounted, OK." "$LOG_FILE"
+    return
   fi
-else
-  log_info "Drives are mounted. Everything is OK." "$LOG_FILE"
-fi
 
-set +e
+  log_error "${NAME}: ${DIR} is not readable. Restarting..." "$LOG_FILE"
+  "${PLEX_CODE_DIR}/scripts/cycle-mount.sh" "$NAME"
+  sleep 15
+
+  if is_readable "$DIR"; then
+    log_info "${NAME}: remounted, back to normal." "$LOG_FILE"
+  else
+    log_fatal "${NAME}: could not be remounted!" "$LOG_FILE"
+  fi
+}
+
+check media "$DEC_DIR_LOCAL"
+check photos "$PHOTOS_DIR_LOCAL"

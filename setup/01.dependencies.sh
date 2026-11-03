@@ -11,11 +11,12 @@ apt_install() {
   echo -n "  Installing dependencies..."
   apt-get install -y \
     curl \
-    screen \
-    unzip \
+    fuse3 \
     glances \
-    screen \
-    sqlite \
+    gpg \
+    python3 \
+    sqlite3 \
+    unzip \
     >/dev/null \
     ;
   apt install -y encfs

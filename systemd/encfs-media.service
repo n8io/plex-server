@@ -1,0 +1,16 @@
+[Unit]
+Description=EncFS decryption of the media mount
+# Stops with rclone and restarts when rclone restarts.
+BindsTo=rclone-media.service
+PartOf=rclone-media.service
+After=rclone-media.service
+
+[Service]
+Type=simple
+ExecStart=@PLEX_CODE_DIR@/scripts/encfs-mount.sh
+ExecStop=/bin/fusermount3 -uz @DEC_DIR_LOCAL@
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=rclone-media.service
