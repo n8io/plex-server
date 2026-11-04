@@ -19,6 +19,9 @@ SQLITE="/usr/lib/plexmediaserver/Plex SQLite"
 LOG=/root/cutover.log
 WAIT_IDLE_MIN="${WAIT_IDLE_MIN:-60}"
 DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
+# --test-rollback: run only the rollback path while the old Plex is still up
+# (new Plex off + old Plex start are both no-ops then), to prove it works.
+TEST_ROLLBACK=0; [ "${1:-}" = "--test-rollback" ] && TEST_ROLLBACK=1
 # shellcheck source=/dev/null
 . /root/.config/plex-cutover.env
 
@@ -62,6 +65,10 @@ rollback() {
 }
 
 say "=== cutover $( [ $DRY = 1 ] && echo DRY RUN ) ==="
+if [ $TEST_ROLLBACK = 1 ]; then
+  systemctl is-active --quiet plexmediaserver && { echo "new Plex is running; not a safe time to test rollback" >&2; exit 2; }
+  FAILED="ROLLBACK TEST (nothing was switched)"; rollback
+fi
 
 # ---- 1. pre-checks: nothing has changed yet, so a failure just stops -------
 oldssh true || { dm ":warning: Plex cutover didn't start: can't SSH to the old server. Nothing changed."; exit 1; }
@@ -134,7 +141,7 @@ say "new libraries:$NEW_FP"
 [ "$NEW_FP" = "$OLD_FP" ] || { fail "library counts differ (old:$OLD_FP new:$NEW_FP)"; rollback; }
 
 # A real file through Plex: first MB of a random movie part.
-PART="$(plex_new "/library/sections/$(echo $OLD_FP | awk '{print $1}' | cut -d= -f1)/all?X-Plex-Container-Start=0&X-Plex-Container-Size=50" | jq_py '
+PART="$(plex_new "/library/recentlyAdded?X-Plex-Container-Start=0&X-Plex-Container-Size=50" | jq_py '
 import random
 items=[m for m in d["MediaContainer"].get("Metadata",[]) if m.get("Media")]
 m=random.choice(items); print(m["Media"][0]["Part"][0]["key"])')" || PART=""
