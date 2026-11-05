@@ -4,7 +4,9 @@
 # attention. Silence means the server is up to date.
 #
 # Config: ~/.config/plex-watch.env (chmod 600)
-#   PLEX_HOST=root@<server>        SLACK_WEBHOOK_URL=https://hooks.slack.com/...
+#   PLEX_HOST=root@<server>
+#   PUSHBULLET_TOKEN=<token>       (preferred; same account as Gatus/nzb)
+#   SLACK_WEBHOOK_URL=https://hooks.slack.com/...   (used only if no Pushbullet token)
 set -u
 CONFIG="${PLEX_WATCH_CONFIG:-$HOME/.config/plex-watch.env}"
 # shellcheck source=/dev/null
@@ -13,8 +15,14 @@ PLEX_CODE_DIR="${PLEX_CODE_DIR:-/plex-server}"
 export PLEX_EXPECTED="${PLEX_EXPECTED:-1}"   # 0 while Plex is intentionally off (before a cutover)
 
 notify() {
-  /usr/bin/python3 -c 'import json,sys; print(json.dumps({"text": sys.argv[1]}))' "$1" |
-    curl -fsS -X POST -H 'Content-Type: application/json' --data @- "$SLACK_WEBHOOK_URL" >/dev/null
+  if [ -n "${PUSHBULLET_TOKEN:-}" ]; then
+    /usr/bin/python3 -c 'import json,sys; print(json.dumps({"type": "note", "title": "Plex server", "body": sys.argv[1]}))' "${1//:warning: /}" |
+      curl -fsS -X POST -H "Access-Token: ${PUSHBULLET_TOKEN}" -H 'Content-Type: application/json' \
+        --data @- https://api.pushbullet.com/v2/pushes >/dev/null
+  else
+    /usr/bin/python3 -c 'import json,sys; print(json.dumps({"text": sys.argv[1]}))' "$1" |
+      curl -fsS -X POST -H 'Content-Type: application/json' --data @- "$SLACK_WEBHOOK_URL" >/dev/null
+  fi
 }
 
 STATUS="$(ssh -o BatchMode=yes -o ConnectTimeout=20 "$PLEX_HOST" "${PLEX_CODE_DIR}/scripts/update-status.sh" 2>&1)" || {
@@ -29,8 +37,10 @@ now, day = s["now"], 86400
 out = []
 if now - s["last_update_run"] > 3 * day:
     out.append("automatic updates haven't run in %d days" % ((now - s["last_update_run"]) // day))
-if s["pending_security"] > 0:
-    out.append("%d security update(s) waiting" % s["pending_security"])
+# unattended-upgrades installs these nightly; only nag when they've survived ~2 runs.
+since = s.get("pending_security_since") or now
+if s["pending_security"] > 0 and now - since > 2 * day:
+    out.append("%d security update(s) waiting %d days (unattended-upgrades isn't installing them)" % (s["pending_security"], (now - since) // day))
 if s["reboot_required_since"] and now - s["reboot_required_since"] > 7 * day:
     out.append("a reboot has been pending for %d days (always busy at 4am?)" % ((now - s["reboot_required_since"]) // day))
 if not s["mounts_ok"]:
