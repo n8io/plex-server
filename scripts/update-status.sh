@@ -11,6 +11,15 @@ LAST_RUN="$(stat -c %Y /var/lib/apt/periodic/unattended-upgrades-stamp 2>/dev/nu
 
 # Security updates still waiting (unattended-upgrades would have installed them).
 PENDING="$(apt-get -s -o Debug::NoLocking=1 upgrade 2>/dev/null | grep -c '^Inst .*-security')"
+# When they first showed up. New fixes land between nightly runs, so the watcher
+# only cares about ones that survived a run or two, not ones published this morning.
+PENDING_STATE=/var/lib/plex-server/security-pending-since
+if [ "${PENDING:-0}" -gt 0 ]; then
+  [ -s "$PENDING_STATE" ] || { mkdir -p "$(dirname "$PENDING_STATE")"; echo "$NOW" > "$PENDING_STATE"; }
+  PENDING_SINCE="$(cat "$PENDING_STATE" 2>/dev/null || echo "$NOW")"
+else
+  rm -f "$PENDING_STATE"; PENDING_SINCE=0
+fi
 
 REBOOT_SINCE=0
 [ -f /var/run/reboot-required ] && REBOOT_SINCE="$(stat -c %Y /var/run/reboot-required)"
@@ -57,7 +66,7 @@ if cd "$PLEX_CODE_DIR" 2>/dev/null && git rev-parse >/dev/null 2>&1; then
   fi
 fi
 
-printf '{"now":%s,"last_update_run":%s,"pending_security":%s,"reboot_required_since":%s,"mounts_ok":%s,"plex_ok":%s,"livepatch":"%s","pro_attached":"%s","release":"%s","raid_ok":%s,"disks_ok":%s,"disk_wear_pct":%s,"root_used_pct":%s,"home_used_pct":%s,"drive_errors":%s,"last_backup":%s,"git_dirty":%s,"git_behind":%s}\n' \
-  "$NOW" "$LAST_RUN" "${PENDING:-0}" "$REBOOT_SINCE" "$MOUNTS_OK" "$PLEX_OK" \
+printf '{"now":%s,"last_update_run":%s,"pending_security":%s,"pending_security_since":%s,"reboot_required_since":%s,"mounts_ok":%s,"plex_ok":%s,"livepatch":"%s","pro_attached":"%s","release":"%s","raid_ok":%s,"disks_ok":%s,"disk_wear_pct":%s,"root_used_pct":%s,"home_used_pct":%s,"drive_errors":%s,"last_backup":%s,"git_dirty":%s,"git_behind":%s}\n' \
+  "$NOW" "$LAST_RUN" "${PENDING:-0}" "${PENDING_SINCE:-0}" "$REBOOT_SINCE" "$MOUNTS_OK" "$PLEX_OK" \
   "${LIVEPATCH:-unknown}" "${PRO:-unknown}" "$(lsb_release -rs 2>/dev/null)" \
   "$RAID_OK" "$DISK_OK" "${DISK_WORST:-0}" "${ROOT_PCT:-0}" "${HOME_PCT:-0}" "${DRIVE_ERRORS:-0}" "$LAST_BACKUP" "$GIT_DIRTY" "$GIT_BEHIND"

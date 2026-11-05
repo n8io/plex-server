@@ -60,7 +60,7 @@ systemd/
   plex-reboot-if-needed.*  nightly reboot only when needed and nobody is streaming
   rclone-update.*          monthly rclone update
 monitor/
-  plex-watch.sh            off-box daily check; Slack DM only on problems
+  plex-watch.sh            off-box daily check; Pushbullet (or Slack) only on problems
   install-macos.sh         installs plex-watch.sh as a launchd job
 scripts/
   mount.sh                 the rclone mount command (all flags live here): mount.sh media|photos
@@ -242,10 +242,21 @@ it with `UBUNTU_PRO_TOKEN=... setup/09.auto-updates.sh` (token from
 https://ubuntu.com/pro/dashboard).
 
 **Watching it:** `monitor/plex-watch.sh` runs daily on another machine
-(`monitor/install-macos.sh` for a Mac) and sends a Slack DM only when something
-is wrong: updates stalled for 3 days, security fixes waiting, a reboot pending
-over a week, mounts unreadable, Plex down, or Pro detached. Its config lives in
-`~/.config/plex-watch.env` (`PLEX_HOST`, `SLACK_WEBHOOK_URL`) on that machine.
+(`monitor/install-macos.sh` for a Mac) and sends a Pushbullet push (Slack if no
+Pushbullet token) only when something is wrong: updates stalled for 3 days,
+security fixes still waiting after 2 days, a reboot pending over a week, mounts
+unreadable, Plex down, or Pro detached. Its config lives in
+`~/.config/plex-watch.env` (`PLEX_HOST`, `PUSHBULLET_TOKEN` or
+`SLACK_WEBHOOK_URL`) on that machine.
+
+Security fixes waiting for under a day are normal: Ubuntu publishes them at any
+hour, `apt-daily` downloads them, and the nightly `apt-daily-upgrade` run
+(~06:00 UTC, randomized) installs them. `update-status.sh` records when fixes
+first appeared (`/var/lib/plex-server/security-pending-since`) so the watcher
+only alerts when they've survived two nightly runs, which means
+unattended-upgrades is actually stuck (check
+`/var/log/unattended-upgrades/unattended-upgrades.log` and
+`unattended-upgrade --dry-run -d`).
 `scripts/update-status.sh` on the server prints the same status as JSON.
 
 ## Access and lockdown
