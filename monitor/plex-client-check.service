@@ -1,0 +1,18 @@
+[Unit]
+Description=Check Plex the way client apps see it (plex.tv record + remote access) and report to Gatus
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/plex-client-check/plex-client-check.py
+# Exit 1 = a check failed; that is reported to Gatus, not a unit failure.
+SuccessExitStatus=1
+DynamicUser=yes
+LoadCredential=env:/etc/plex-client-check.env
+Environment=PLEX_CLIENT_CHECK_ENV=%d/env
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+TimeoutStartSec=120
