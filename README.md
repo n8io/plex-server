@@ -62,6 +62,7 @@ systemd/
 monitor/
   plex-watch.sh            off-box daily check; Pushbullet (or Slack) only on problems
   install-macos.sh         installs plex-watch.sh as a launchd job
+  plex-client-check.py     runs on the Coolify VPS: plex.tv's record + remote access, as apps see it -> Gatus (docs/plex-client-check.md)
 scripts/
   mount.sh                 the rclone mount command (all flags live here): mount.sh media|photos
   encfs-mount.sh           the EncFS command
