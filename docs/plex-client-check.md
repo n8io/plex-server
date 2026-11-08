@@ -55,7 +55,7 @@ sudo PLEX_CLIENT_CHECK_ENV=/etc/plex-client-check.env python3 /opt/plex-client-c
 # enter the printed code at https://plex.tv/link while signed in as the server owner
 ```
 
-Gatus side (Coolify → uptime.n8io.com → `/config/config.yaml`, env var `PLEX_CLIENT_CHECK_TOKEN` in Coolify):
+Gatus side (Coolify → uptime.n8io.com service; config on the VPS at `/data/coolify/services/ukoookc88skco4sk8cwos8cc/config.yaml`, bind-mounted to `/config/config.yaml`; env var `PLEX_CLIENT_CHECK_TOKEN` is a Coolify env var on that service, same value as `GATUS_TOKEN` above). External endpoints have no URL, so each alert overrides the Pushbullet body to send a **link push** to its Gatus page. `[RESULT_ERRORS]` carries the checker's reason (blank on UP).
 
 ```yaml
 external-endpoints:
@@ -63,13 +63,21 @@ external-endpoints:
     group: Media Management
     token: "${PLEX_CLIENT_CHECK_TOKEN}"
     heartbeat:
-      interval: 10m
+      interval: 10m          # no push for 10 min = checker is dead = alert
     alerts:
       - type: custom
         failure-threshold: 2
         success-threshold: 2
         send-on-resolved: true
         description: "Plex apps may block N8Flix: plex.tv's record of the server looks wrong"
+        provider-override:   # replaces only the body; url/headers/token come from alerting.custom
+          body: |
+            {
+              "type": "link",
+              "title": "[ENDPOINT_NAME] - [ALERT_TRIGGERED_OR_RESOLVED]",
+              "body": "📁 Group: [ENDPOINT_GROUP]\n🔔 Alert: [ALERT_DESCRIPTION]\n⚠️ Reason: [RESULT_ERRORS]",
+              "url": "https://uptime.n8io.com/endpoints/media-management_plex-app-view"
+            }
   - name: Plex remote access
     group: Media Management
     token: "${PLEX_CLIENT_CHECK_TOKEN}"
@@ -81,7 +89,19 @@ external-endpoints:
         success-threshold: 2
         send-on-resolved: true
         description: "Plex apps outside the house can't reach N8Flix"
+        provider-override:
+          body: |
+            {
+              "type": "link",
+              "title": "[ENDPOINT_NAME] - [ALERT_TRIGGERED_OR_RESOLVED]",
+              "body": "📁 Group: [ENDPOINT_GROUP]\n🔔 Alert: [ALERT_DESCRIPTION]\n⚠️ Reason: [RESULT_ERRORS]",
+              "url": "https://uptime.n8io.com/endpoints/media-management_plex-remote-access"
+            }
 ```
+
+The shared `alerting.custom` body (all other Gatus alerts) also got a `⚠️ Reason: [RESULT_ERRORS]` line on 2026-11-08.
+
+Deployed 2026-11-08. Gatus backups on the VPS: `/root/backups/plex-client-check-20261108T130755Z/` (`config.yaml` + `.env` original, `config.yaml.before-links`, `config.yaml.before-reason`). Tested by setting `SERVER_NAME=N8FlixTEST`: DOWN push after 2 runs with reason "record name is 'N8Flix', expected 'N8FlixTEST' (token hijack?)", then UP after restoring.
 
 ## Run it by hand
 
