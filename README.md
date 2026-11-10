@@ -71,6 +71,7 @@ scripts/
   logs-cleanup.sh          nightly log truncation
   plex-scan.sh (+ .py)     scan one show/movie folder into Plex, fuzzy by name
   upload-scan.sh           nzb2's forced SSH command: queue uploaded files, scan each folder once it appears
+  media-check.py           nzb2's media-api forced SSH command (read-only): find an item in Plex, ffprobe/decode-test it (n8io/nzb docs/media-api.md)
   cache-status.sh          what's on local disk, per file, in decrypted names
   helper-functions.sh      encode/decode filenames with encfsctl (sourced by .bashrc)
 addons/
