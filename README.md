@@ -76,6 +76,7 @@ scripts/
   helper-functions.sh      encode/decode filenames with encfsctl (sourced by .bashrc)
 addons/
   plex-scan-ui/ (+ .sh)    web page to scan one show/season/movie; .sh installs it
+  plex-trash-clean/ (+ .sh) guarded nightly Empty Trash with Pushbullet alerts; .sh installs it
   tautulli.sh              Tautulli stream history, tailnet only (https://<node>:8443)
   extended-personal-media-scanner.sh   scanner for libraries without standard metadata
 ```
