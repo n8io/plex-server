@@ -34,7 +34,12 @@ def load_env(path):
         if not line or line.startswith('#') or '=' not in line:
             continue
         k, v = line.split('=', 1)
-        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+        v = v.strip()
+        if v[:1] in '"\'' and len(v) > 1 and v[-1] == v[0]:
+            v = v[1:-1]                      # quoted value: keep as is (may contain #)
+        else:
+            v = v.split(' #', 1)[0].split('\t#', 1)[0].strip()  # drop inline comments
+        os.environ.setdefault(k.strip(), v)
 
 load_env(env('ENV_FILE', '/etc/plex-dcr.env'))
 PMS = env('PMS', '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server')
@@ -42,7 +47,7 @@ DB = os.path.join(PMS, 'Plug-in Support/Databases/com.plexapp.plugins.library.db
 SQLITE = env('PLEX_SQLITE', '/usr/lib/plexmediaserver/Plex SQLite')
 STATE = env('STATE_DIR', '/var/lib/plex-dcr')
 LOG = env('LOG', '/var/log/plex-dcr.log')
-DRY = env('DRY_RUN', '1') == '1'
+DRY = env('DRY_RUN', '1').strip() != '0'   # anything but an explicit 0 stays a dry run
 TARGET = float(env('TARGET_TB', '10')) * 1e12
 MIN_DCR = int(env('MIN_DCR', '60'))
 EXCLUDE_SECTIONS = {s.strip() for s in env('EXCLUDE_SECTIONS', 'Workouts').split(',') if s.strip()}
@@ -308,6 +313,8 @@ def main():
     if not DRY or env('PUSH_IN_DRY_RUN') == '1':
         push(('[dry run] ' if DRY else '') + 'Plex cleanup (DCR) weekly', body, env('REPORT_URL') or 'https://app.plex.tv/desktop')
     if jstat.startswith('FAILED'):
+        if DRY and env('PUSH_IN_DRY_RUN') != '1':
+            log(f'dry run: not pushing failure ({jstat})'); sys.exit(1)
         push('Plex cleanup (DCR) failed', f'Plex Janitor sync failed: {jstat}. Check /var/log/plex-dcr.log on the Plex box.', 'https://plex-janitor.n8io.com')
         sys.exit(1)
 
@@ -316,5 +323,6 @@ if __name__ == '__main__':
         main()
     except Exception as e:
         log(f'ERROR: {e}')
-        push('Plex cleanup (DCR) failed', f'The weekly DCR job crashed: {e}. Check /var/log/plex-dcr.log on the Plex box.', 'https://app.plex.tv/desktop')
+        if os.environ.get('DRY_RUN', '1').strip() == '0' or env('PUSH_IN_DRY_RUN') == '1':
+            push('Plex cleanup (DCR) failed', f'The weekly DCR job crashed: {e}. Check /var/log/plex-dcr.log on the Plex box.', 'https://app.plex.tv/desktop')
         raise
