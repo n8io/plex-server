@@ -42,3 +42,9 @@ and names that do **not** start with "Movies" or "TV Shows", so the n8n
 "Plex | Delete Unwatched Media" workflow (paused 2026-11-15) can never pick them up.
 Titles are added with `POST /api/collections/add` (`manual: true`) and removed with
 `POST /api/collections/remove`.
+
+Created 2026-11-15: rule groups / collections 6 "Leaving Soon: Movies" (library 2),
+7 "Leaving Soon: TV Shows" (1), 8 "Leaving Soon: Kid Shows" (4), 9 "Leaving Soon: Prerelease" (7),
+all `useRules: false`, `arrAction` 4, no delete timer. The old "Haven't Watched In Forever" groups
+4 and 5 were deactivated. Gotcha: `PUT /api/rules` resets `collection.arrAction` to 0 (Delete)
+unless you send it back in the body, so always send the full collection block.
