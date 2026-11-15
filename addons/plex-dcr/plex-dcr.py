@@ -49,6 +49,8 @@ EXCLUDE_SECTIONS = {s.strip() for s in env('EXCLUDE_SECTIONS', 'Workouts').split
 EXCLUDE_WATCHLISTED = env('EXCLUDE_WATCHLISTED', '1') == '1'
 GRACE = int(env('GRACE_DAYS', '30'))
 NEW_DAYS = 90
+# Plex Janitor collections are per library: "Plex library name=collection id", comma-separated
+COLLS = {k.strip(): int(v) for k, v in (p.rsplit('=', 1) for p in env('LEAVING_SOON_COLLECTIONS', '').split(',') if '=' in p)}
 NOW = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
 
 def log(msg):
@@ -227,6 +229,7 @@ def select(scored):
     for it in sorted(scored, key=lambda i: (-i['dcr'], -i['bytes'])):
         if total >= TARGET or it['dcr'] < MIN_DCR: break
         if EXCLUDE_WATCHLISTED and it['watchlist']: continue
+        if COLLS and it['section'] not in COLLS: continue  # no Leaving soon collection for that library
         picked.append(it); total += it['bytes']
     return picked, total
 
@@ -276,11 +279,13 @@ def main():
     ready = [i for i in picked if (NOW - dt.datetime.strptime(seen[str(i['id'])], '%Y-%m-%d')).days >= GRACE]
     # Plex Janitor
     jstat = 'not configured'
-    if env('MAINTAINERR_URL') and env('MOVIES_COLLECTION_ID') and env('SHOWS_COLLECTION_ID'):
+    if env('MAINTAINERR_URL') and COLLS:
         try:
-            a1, r1 = sync_collection(int(env('MOVIES_COLLECTION_ID')), {str(i['id']) for i in picked if i['type'] == 'movie'})
-            a2, r2 = sync_collection(int(env('SHOWS_COLLECTION_ID')), {str(i['id']) for i in picked if i['type'] == 'show'})
-            jstat = f"{'would add' if DRY else 'added'} {len(a1)+len(a2)}, {'would remove' if DRY else 'removed'} {len(r1)+len(r2)}"
+            a = r = 0
+            for sec, cid in COLLS.items():
+                ad, rm = sync_collection(cid, {str(i['id']) for i in picked if i['section'] == sec})
+                a += len(ad); r += len(rm)
+            jstat = f"{'would add' if DRY else 'added'} {a}, {'would remove' if DRY else 'removed'} {r}"
         except Exception as e:
             jstat = f'FAILED ({e})'
     if not DRY:
