@@ -24,7 +24,7 @@ Log: `/var/log/plex-dcr.log`. Output: `/var/lib/plex-dcr/report.json` (every sco
 | Depth | 10 | Movies by total plays (0 = 10, 1 = 7, 2 = 4, 3-4 = 2, 5+ = 0). Shows by share of episodes ever played (0% = 10, 0 at 50%) |
 | Size | 10 | Percentile of size among all titles |
 
-Not scored: `EXCLUDE_SECTIONS` (Workouts by default) and anything added in the last 90 days.
+Not scored: `EXCLUDE_SECTIONS` (Workouts by default), anything added in the last 90 days, items with no files (0 bytes) and orphaned items outside any library.
 
 ## Data
 
