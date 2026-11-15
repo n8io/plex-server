@@ -49,7 +49,7 @@ EXCLUDE_SECTIONS = {s.strip() for s in env('EXCLUDE_SECTIONS', 'Workouts').split
 EXCLUDE_WATCHLISTED = env('EXCLUDE_WATCHLISTED', '1') == '1'
 GRACE = int(env('GRACE_DAYS', '30'))
 NEW_DAYS = 90
-NOW = dt.datetime.utcnow()
+NOW = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
 
 def log(msg):
     line = f"{NOW:%Y-%m-%dT%H:%M:%SZ} {msg}"
@@ -84,11 +84,15 @@ def push(title, body, url=None):
         log(f"pushbullet failed: {e}")
 
 # ---------- data ----------
+def drop_copy(copy):
+    for f in (copy, copy + '-wal', copy + '-shm'):
+        if os.path.exists(f):
+            os.remove(f)
+
 def snapshot_db():
     os.makedirs(STATE, exist_ok=True)
     copy = os.path.join(STATE, 'library-copy.db')
-    if os.path.exists(copy):
-        os.remove(copy)
+    drop_copy(copy)
     subprocess.run([SQLITE, DB, f".backup '{copy}'"], check=True, timeout=1800)
     return copy
 
@@ -96,7 +100,7 @@ def ts(v):
     if v is None or v == '':
         return None
     if isinstance(v, (int, float)):
-        return dt.datetime.utcfromtimestamp(v)
+        return dt.datetime.fromtimestamp(v, dt.timezone.utc).replace(tzinfo=None)
     return dt.datetime.strptime(str(v)[:19], '%Y-%m-%d %H:%M:%S')
 
 def read_plex(path):
@@ -108,7 +112,9 @@ def read_plex(path):
     for i, sec, mt, title, year, guid, added, arating in q(
             "SELECT id, library_section_id, metadata_type, title, year, guid, added_at, audience_rating "
             "FROM metadata_items WHERE metadata_type IN (1,2) AND deleted_at IS NULL"):
-        it = dict(id=i, section=sections.get(sec, str(sec)), type='movie' if mt == 1 else 'show', title=title,
+        if sec not in sections:  # orphaned items (e.g. section -2) aren't in any library
+            continue
+        it = dict(id=i, section=sections[sec], type='movie' if mt == 1 else 'show', title=title,
                   year=year, guid=guid, added=ts(added), arating=arating, bytes=0, eps=0, ext={})
         items.append(it); by_id[i] = it
     for mid, tag in q("SELECT tg.metadata_item_id, t.tag FROM taggings tg JOIN tags t ON t.id = tg.tag_id WHERE t.tag_type = 314"):
@@ -183,7 +189,7 @@ def pctl(vals):
 
 def score(items, imdb, wl):
     AUD = {0: 35, 1: 28, 2: 18, 3: 10, 4: 5, 5: 5}
-    pool = [i for i in items if i['section'] not in EXCLUDE_SECTIONS]
+    pool = [i for i in items if i['section'] not in EXCLUDE_SECTIONS and i['bytes'] > 0]
     for it in pool:
         ir = imdb.get(it['ext'].get('imdb'))
         it['imdb_rating'], it['imdb_votes'] = ir if ir else (None, None)
@@ -255,7 +261,7 @@ def main():
     try:
         items = read_plex(copy)
     finally:
-        os.remove(copy)
+        drop_copy(copy)
     imdb = imdb_ratings()
     wl, wl_status = watchlists()
     scored = score(items, imdb, wl)
