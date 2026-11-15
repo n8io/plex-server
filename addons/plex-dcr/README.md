@@ -1,7 +1,7 @@
 # plex-dcr: weekly deletion-candidate rating
 
 Scores every movie and show 0-100 (DCR, higher means a better candidate to delete) and keeps
-two Plex Janitor (Maintainerr) **Leaving soon** collections, one for movies and one for shows,
+Plex Janitor (Maintainerr) **Leaving soon** collections, one per Plex library (`LEAVING_SOON_COLLECTIONS`),
 filled with the top titles until `TARGET_TB` is covered. Users see those collections in Plex.
 A title drops out on the next run once someone plays it or adds it to a watchlist.
 
@@ -37,7 +37,7 @@ Not scored: `EXCLUDE_SECTIONS` (Workouts by default), anything added in the last
 ## Plex Janitor
 
 Maintainerr's API has no auth of its own; the basic auth on plex-janitor.n8io.com is the only
-gate. The two collections must be manual-only rule groups with **Do nothing** (`arrAction` 4)
+gate. The collections must be manual-only rule groups with **Do nothing** (`arrAction` 4)
 and names that do **not** start with "Movies" or "TV Shows", so the n8n
 "Plex | Delete Unwatched Media" workflow (paused 2026-11-15) can never pick them up.
 Titles are added with `POST /api/collections/add` (`manual: true`) and removed with
