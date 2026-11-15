@@ -232,7 +232,7 @@ def score(items, imdb, wl):
 def select(scored):
     picked, total = [], 0
     for it in sorted(scored, key=lambda i: (-i['dcr'], -i['bytes'])):
-        if total >= TARGET or it['dcr'] < MIN_DCR: break
+        if (TARGET > 0 and total >= TARGET) or it['dcr'] < MIN_DCR: break
         if EXCLUDE_WATCHLISTED and it['watchlist']: continue
         if COLLS and it['section'] not in COLLS: continue  # no Leaving soon collection for that library
         picked.append(it); total += it['bytes']
@@ -264,7 +264,7 @@ def main():
     lock = open(os.path.join(STATE, '.lock'), 'w')
     try: fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError: return
-    log(f"start (dry_run={DRY}, target={TARGET/1e12:g} TB, min_dcr={MIN_DCR})")
+    log(f"start (dry_run={DRY}, target={TARGET/1e12:g} TB{' (no cap)' if TARGET <= 0 else ''}, min_dcr={MIN_DCR})")
     copy = snapshot_db()
     try:
         items = read_plex(copy)
