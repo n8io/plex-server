@@ -2,7 +2,7 @@
 
 Scores every movie and show 0-100 (DCR, higher means a better candidate to delete) and keeps
 Plex Janitor (Maintainerr) **Leaving soon** collections, one per Plex library (`LEAVING_SOON_COLLECTIONS`),
-filled with the top titles until `TARGET_TB` is covered. Users see those collections in Plex.
+filled with every title scoring `MIN_DCR` (64) or more. `TARGET_TB` can cap the list size; 0 (the default) means no cap. A size target would refill the list every week after approved deletions, so the default is a fixed score bar. Users see those collections in Plex.
 A title drops out on the next run once someone plays it or adds it to a watchlist.
 
 **It never deletes anything.** Each Monday it pushes a Pushbullet summary. Titles that have
