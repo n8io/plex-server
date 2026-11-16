@@ -4,8 +4,9 @@
 Scores every movie/show 0-100 (higher = better to delete), then keeps two Plex Janitor
 (Maintainerr) "Leaving soon" collections in sync with the top titles, so users see
 what may go and can save something by watching it or adding it to their watchlist.
-Deletion stays manual: Nate approves titles; only approved titles are deleted
-(rclone deletefile on the encrypted Drive path).
+It never deletes anything itself. With AUTO_APPROVE=1 (Nate, 2026-11-16) every title that has
+been in Leaving soon for GRACE_DAYS is added to the Plex collection "Approved for Deletion";
+the n8n "Plex | Delete Approved Media" workflow then deletes up to 25 of those per daily run.
 
 DCR (100) = audience 35 + time since last play 20 + unpopularity 25 + depth 10 + size 10
   audience: distinct Plex accounts that ever played it: 0=35 1=28 2=18 3=10 4-5=5 6+=0
@@ -53,6 +54,9 @@ MIN_DCR = int(env('MIN_DCR', '60'))
 EXCLUDE_SECTIONS = {s.strip() for s in env('EXCLUDE_SECTIONS', 'Workouts').split(',') if s.strip()}
 EXCLUDE_WATCHLISTED = env('EXCLUDE_WATCHLISTED', '1') == '1'
 GRACE = int(env('GRACE_DAYS', '30'))
+AUTO_APPROVE = env('AUTO_APPROVE', '0').strip() == '1'
+APPROVED = 'Approved for Deletion'
+PLEX = env('PLEX_URL', 'http://127.0.0.1:32400')
 NEW_DAYS = 90
 # Plex Janitor collections are per library: "Plex library name=collection id", comma-separated
 COLLS = {k.strip(): int(v) for k, v in (p.rsplit('=', 1) for p in env('LEAVING_SOON_COLLECTIONS', '').split(',') if '=' in p)}
@@ -256,6 +260,53 @@ def sync_collection(cid, want):
         janitor('/api/collections/remove', 'POST', {'collectionId': cid, 'media': [{'mediaServerId': k} for k in rem]})
     return add, rem
 
+# ---------- Plex "Approved for Deletion" ----------
+def plex_token():
+    import re
+    try:
+        m = re.search(r'PlexOnlineToken="([^"]+)"', open(os.path.join(PMS, 'Preferences.xml')).read())
+    except OSError:
+        m = None
+    if not m:
+        raise RuntimeError('no Plex token in Preferences.xml')
+    return m.group(1)
+
+def approve(ready):
+    """Add ready titles to each library's "Approved for Deletion" collection. Only adds, never removes:
+    a title that leaves Leaving soon is safe anyway (the delete needs both collections),
+    and Nate can still add titles by hand."""
+    if not ready:
+        return 0
+    import urllib.parse
+    tok = plex_token()
+    H = {'X-Plex-Token': tok, 'Accept': 'application/json'}
+    def call(path, method='GET'):
+        return http(PLEX + path, method, None, H)
+    mid = call('/identity')['MediaContainer']['machineIdentifier']
+    secs = {d['title']: d for d in call('/library/sections')['MediaContainer'].get('Directory', [])}
+    added = 0
+    for name in sorted({i['section'] for i in ready}):
+        d = secs.get(name)
+        if not d:
+            continue
+        colls = call(f"/library/sections/{d['key']}/collections")['MediaContainer'].get('Metadata', [])
+        appr = next((c for c in colls if c['title'].lower().startswith(APPROVED.lower())), None)
+        have = set()
+        if appr:
+            have = {str(m['ratingKey']) for m in call(f"/library/collections/{appr['ratingKey']}/children")['MediaContainer'].get('Metadata', [])}
+        keys = [str(i['id']) for i in ready if i['section'] == name and str(i['id']) not in have]
+        for n in range(0, len(keys), 50):
+            chunk = keys[n:n + 50]
+            uri = urllib.parse.quote(f"server://{mid}/com.plexapp.plugins.library/library/metadata/{','.join(chunk)}", safe='')
+            if appr:
+                call(f"/library/collections/{appr['ratingKey']}/items?uri={uri}", 'PUT')
+            else:
+                t = 2 if d['type'] == 'show' else 1
+                r = call(f"/library/collections?type={t}&title={urllib.parse.quote(APPROVED)}&smart=0&sectionId={d['key']}&uri={uri}", 'POST')
+                appr = r['MediaContainer']['Metadata'][0]
+            added += len(chunk)
+    return added
+
 # ---------- main ----------
 def gb(b): return f"{b/1e12:.2f} TB" if b >= 1e12 else f"{b/1e9:.0f} GB"
 
@@ -303,12 +354,19 @@ def main():
                 leaving=str(i['id']) in keys, since=seen.get(str(i['id'])))
            for i in sorted(scored, key=lambda i: (-i['dcr'], -i['bytes']))]
     json.dump({'generated': NOW.isoformat() + 'Z', 'target': TARGET, 'rows': rep}, open(os.path.join(STATE, 'report.json'), 'w'))
+    astat = ''
+    if AUTO_APPROVE and not DRY:
+        try:
+            astat = f"Auto-approved for deletion: {approve(ready)} new; the daily delete takes up to 25 per run.\n"
+        except Exception as e:
+            jstat = f'FAILED (auto-approve: {e})'
     rb = sum(i['bytes'] for i in ready)
     body = (f"Leaving soon: {len(picked)} titles, {gb(total)} (DCR >= {picked[-1]['dcr'] if picked else '-'}).\n"
-            f"Past the {GRACE}-day grace period and ready for your approval: {len(ready)} titles, {gb(rb)}.\n"
+            f"Past the {GRACE}-day grace period{' (deleted automatically)' if AUTO_APPROVE else ' and ready for your approval'}: {len(ready)} titles, {gb(rb)}.\n"
+            + astat +
             f"Plex Janitor: {jstat}. Watchlists: {wl_status}.\n"
             + ''.join(f"- {i['title']} ({i['year']}) {gb(i['bytes'])} DCR {i['dcr']}\n" for i in ready[:15])
-            + ("Nothing is deleted until you approve it in the Plex project." if ready else ""))
+            + ("Nothing is deleted until you approve it in the Plex project." if ready and not AUTO_APPROVE else ""))
     log(body.replace('\n', ' | '))
     if not DRY or env('PUSH_IN_DRY_RUN') == '1':
         push(('[dry run] ' if DRY else '') + 'Plex cleanup (DCR) weekly', body, env('REPORT_URL') or 'https://app.plex.tv/desktop')

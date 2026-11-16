@@ -5,10 +5,14 @@ Plex Janitor (Maintainerr) **Leaving soon** collections, one per Plex library (`
 filled with every title scoring `MIN_DCR` (64) or more. `TARGET_TB` can cap the list size; 0 (the default) means no cap. A size target would refill the list every week after approved deletions, so the default is a fixed score bar. Users see those collections in Plex.
 A title drops out on the next run once someone plays it or adds it to a watchlist.
 
-**It never deletes anything.** Each Monday it pushes a Pushbullet summary. Titles that have
-sat in Leaving soon for `GRACE_DAYS` are listed for approval. Only titles Nate approves are
-deleted, one by one, with `rclone deletefile` on the encrypted Drive path, and are unmonitored
-in Radarr/Sonarr.
+**It never deletes anything itself.** Each Monday it pushes a Pushbullet summary.
+With `AUTO_APPROVE=1` (Nate, 2026-11-16: "I don't think I need to approve each and every deletion")
+every title that has sat in Leaving soon for `GRACE_DAYS` is added to the Plex collection
+**Approved for Deletion** in its library. It only adds titles there and never removes any, so titles
+Nate adds by hand stay put. The n8n workflow "Plex | Delete Approved Media" then deletes up to 25 titles
+(and at most 3 TB) per daily run, taking only titles that are in both collections. A title someone watches
+drops out of Leaving soon and so can't be deleted. See n8io/nzb `docs/media-delete.md`.
+With `AUTO_APPROVE=0`, ready titles are only listed in the push and Nate approves them by hand.
 
 Install / update: `./addons/plex-dcr.sh` (Mondays 14:00 UTC via `/etc/cron.d/plex-dcr`).
 Config: `/etc/plex-dcr.env` (see `plex-dcr.env.example`). It starts with `DRY_RUN=1`.
