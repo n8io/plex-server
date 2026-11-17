@@ -35,9 +35,13 @@ in `../2026-10-27/`):
 
 ## Teardown
 
-1. `tailscale logout` on the old box; node deleted in the Tailscale admin.
-2. Old host key/aliases removed from known_hosts / ssh config on n8mini, nzb2, tgl-prod.
-3. Server cancelled in the OVH Canada manager (irreversible; disks are wiped by OVH).
+1. `tailscale logout` on the old box; node `n8flix` removed in the Tailscale admin.
+2. Old host key removed from n8mini `~/.ssh/known_hosts` (backup `known_hosts.old`); nzb2 and
+   tgl-prod had none, and no ssh config aliases existed.
+3. OVH Canada service `ns521375.ip-158-69-124.net` set to "end on expiry" on 2026-11-17:
+   status *Cancellation scheduled*, terminates 2026-12-01 (prepaid term). Can be undone
+   in the manager ("Undo cancellation") until 24h before. Until then the box still runs its
+   rclone/encfs mounts and root cron; Plex itself is off. After termination OVH wipes the disks.
 
 If anything Plex-related ever breaks with a reference to `158.69.124.112`, it is a stale
 config: point it at `plex.n8io.com` / the new box.
