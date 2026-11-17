@@ -4,7 +4,7 @@
 # public on 32400.
 set -e
 
-TS_HOSTNAME="${TS_HOSTNAME:-n8flix}"
+TS_HOSTNAME="${TS_HOSTNAME:-n8flix-new}"
 SCAN_UI_PORT="${SCAN_UI_PORT:-8080}"
 
 if ! command -v tailscale >/dev/null 2>&1; then

@@ -1,6 +1,10 @@
 #!/bin/bash
 # Move Plex from the old box to this one, unattended, all-or-nothing.
 #
+# HISTORICAL: the cutover ran 2026-11-04 and the old box (158.69.124.112) was
+# decommissioned 2026-11-17 (docs/decommission-old-ovh.md). Kept for reference;
+# do not run it again.
+#
 #   cutover.sh --dry-run   every check and the data sync, but Plex never moves
 #   cutover.sh             the real thing
 #
