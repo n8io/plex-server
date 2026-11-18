@@ -18,6 +18,9 @@ DCR (100) = audience 35 + time since last play 20 + unpopularity 25 + depth 10 +
             episodes ever played, 0%=10 falling to 0 at 50%
   size:     percentile of size among all titles
 Not scored: excluded sections (Workouts) and titles added < 90 days ago.
+Never listed: titles on anyone's watchlist, and shows still airing (Sonarr status not "ended")
+that anyone played in the last AIRING_WATCHED_DAYS (Nate, 2026-11-18: 2 years). A show Sonarr
+doesn't know, or any show when Sonarr can't be reached, counts as still airing.
 
 Config: /etc/plex-dcr.env (root 600). See README.md.
 """
@@ -54,6 +57,7 @@ MIN_DCR = int(env('MIN_DCR', '60'))
 EXCLUDE_SECTIONS = {s.strip() for s in env('EXCLUDE_SECTIONS', 'Workouts').split(',') if s.strip()}
 EXCLUDE_WATCHLISTED = env('EXCLUDE_WATCHLISTED', '1') == '1'
 GRACE = int(env('GRACE_DAYS', '30'))
+AIRING_DAYS = int(env('AIRING_WATCHED_DAYS', '730'))  # 0 = off
 AUTO_APPROVE = env('AUTO_APPROVE', '0').strip() == '1'
 APPROVED = 'Approved for Deletion'
 PLEX = env('PLEX_URL', 'http://127.0.0.1:32400')
@@ -233,11 +237,30 @@ def score(items, imdb, wl):
         it['dcr'] = round(aud + stale + unpop + depth + size)
     return [i for i in pool if i['dcr'] is not None]
 
-def select(scored):
+def sonarr_status():
+    """({tvdbId: status}, note) from Sonarr. Empty map on failure: then every watched show counts as airing."""
+    url, key = env('SONARR_URL', '').rstrip('/'), env('SONARR_API_KEY', '')
+    if not url or not key:
+        log('sonarr status skipped: SONARR_URL/SONARR_API_KEY not set'); return {}, 'Sonarr not configured, all watched shows protected'
+    try:
+        rows = http(f'{url}/api/v3/series', headers={'X-Api-Key': key, 'Accept': 'application/json'}, timeout=120)
+        return {str(r.get('tvdbId')): (r.get('status') or '').lower() for r in rows}, f'{len(rows)} series'
+    except Exception as e:
+        log(f'sonarr status failed: {e}'); return {}, f'Sonarr failed ({e}), all watched shows protected'
+
+def airing_watched(it, status):
+    """Still-airing show that someone played within AIRING_DAYS: never offered for deletion."""
+    if not AIRING_DAYS or it['type'] != 'show' or not it['last']: return False
+    if (NOW - it['last']).days >= AIRING_DAYS: return False
+    return status.get(str(it['ext'].get('tvdb', ''))) != 'ended'
+
+def select(scored, status=None):
+    status = status or {}
     picked, total = [], 0
     for it in sorted(scored, key=lambda i: (-i['dcr'], -i['bytes'])):
         if (TARGET > 0 and total >= TARGET) or it['dcr'] < MIN_DCR: break
         if EXCLUDE_WATCHLISTED and it['watchlist']: continue
+        if airing_watched(it, status): it['airing'] = True; continue
         if COLLS and it['section'] not in COLLS: continue  # no Leaving soon collection for that library
         picked.append(it); total += it['bytes']
     return picked, total
@@ -324,7 +347,9 @@ def main():
     imdb = imdb_ratings()
     wl, wl_status = watchlists()
     scored = score(items, imdb, wl)
-    picked, total = select(scored)
+    status, st_note = sonarr_status()
+    picked, total = select(scored, status)
+    airing = [i for i in scored if i.get('airing')]
     # first-seen state for the grace period
     sf = os.path.join(STATE, 'state.json')
     seen = json.load(open(sf)) if os.path.exists(sf) else {}
@@ -351,7 +376,7 @@ def main():
                 ir=i['imdb_rating'], iv=i['imdb_votes'], im=i['ext'].get('imdb'), tmdb=i['ext'].get('tmdb'), tvdb=i['ext'].get('tvdb'),
                 n=len(i['users']), u=sorted(i['users'])[:3], p=i['plays'], l=i['last'].strftime('%Y-%m-%d') if i['last'] else '',
                 a=i['added'].strftime('%Y-%m-%d') if i['added'] else '', w=i['watchlist'], d=i['dcr'], pa=i['parts'],
-                leaving=str(i['id']) in keys, since=seen.get(str(i['id'])))
+                leaving=str(i['id']) in keys, since=seen.get(str(i['id'])), air=bool(i.get('airing')))
            for i in sorted(scored, key=lambda i: (-i['dcr'], -i['bytes']))]
     json.dump({'generated': NOW.isoformat() + 'Z', 'target': TARGET, 'rows': rep}, open(os.path.join(STATE, 'report.json'), 'w'))
     astat = ''
@@ -365,6 +390,7 @@ def main():
             f"Past the {GRACE}-day grace period{' (deleted automatically)' if AUTO_APPROVE else ' and ready for your approval'}: {len(ready)} titles, {gb(rb)}.\n"
             + astat +
             f"Plex Janitor: {jstat}. Watchlists: {wl_status}.\n"
+            f"Kept as still airing and watched in the last {AIRING_DAYS} days: {len(airing)} shows, {gb(sum(i['bytes'] for i in airing))} ({st_note}).\n"
             + ''.join(f"- {i['title']} ({i['year']}) {gb(i['bytes'])} DCR {i['dcr']}\n" for i in ready[:15])
             + ("Nothing is deleted until you approve it in the Plex project." if ready and not AUTO_APPROVE else ""))
     log(body.replace('\n', ' | '))
