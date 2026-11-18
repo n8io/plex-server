@@ -146,16 +146,19 @@ def read_plex(path):
                        "WHERE mi.deleted_at IS NULL GROUP BY mi.metadata_item_id"):
         tgt = mid if mid in by_id else show_of(mid)
         if tgt in by_id: by_id[tgt]['bytes'] += size or 0
-    guid_item = {it['guid']: it for it in items}
+    # The same title can sit in two libraries (e.g. a show in both TV Shows and Kid Shows) with the
+    # same guid. Plays are stored by guid, so credit every copy with them: a copy nobody played
+    # directly must not look unwatched while its twin is popular.
+    guid_items = {}
     for it in items:
         it.update(users=set(), plays=0, last=None, weps=set())
+        guid_items.setdefault(it['guid'], []).append(it)
     for acct, guid, mt, gguid, viewed in q("SELECT account_id, guid, metadata_type, grandparent_guid, viewed_at FROM metadata_item_views"):
-        it = guid_item.get(guid if mt == 1 else gguid)
-        if not it: continue
-        it['users'].add(accounts.get(acct, str(acct))); it['plays'] += 1
         v = ts(viewed)
-        if v and (it['last'] is None or v > it['last']): it['last'] = v
-        if mt == 4: it['weps'].add(guid)
+        for it in guid_items.get(guid if mt == 1 else gguid, ()):
+            it['users'].add(accounts.get(acct, str(acct))); it['plays'] += 1
+            if v and (it['last'] is None or v > it['last']): it['last'] = v
+            if mt == 4: it['weps'].add(guid)
     con.close()
     return items
 
