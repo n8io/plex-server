@@ -28,6 +28,13 @@ Log: `/var/log/plex-dcr.log`. Output: `/var/lib/plex-dcr/report.json` (every sco
 | Depth | 10 | Movies by total plays (0 = 10, 1 = 7, 2 = 4, 3-4 = 2, 5+ = 0). Shows by share of episodes ever played (0% = 10, 0 at 50%) |
 | Size | 10 | Percentile of size among all titles |
 
+Never listed (Nate, 2026-11-18): titles on anyone's watchlist (`EXCLUDE_WATCHLISTED=1`), and
+**still-airing shows someone played in the last `AIRING_WATCHED_DAYS` (730 = 2 years)**. "Still airing"
+means Sonarr's series status (`SONARR_URL`/`SONARR_API_KEY`, matched by TVDB id) is anything but `ended`.
+A show Sonarr doesn't know counts as airing, and so does every watched show if Sonarr can't be reached,
+so a Sonarr outage can only keep things, never delete them. The weekly push says how many shows this kept.
+Before this guard, 16 watched still-airing shows were deleted in the Nov 15-18 batches.
+
 Not scored: `EXCLUDE_SECTIONS` (Workouts by default), anything added in the last 90 days, items with no files (0 bytes) and orphaned items outside any library.
 
 ## Data
@@ -35,6 +42,7 @@ Not scored: `EXCLUDE_SECTIONS` (Workouts by default), anything added in the last
 - Plex DB: a `Plex SQLite .backup` copy under `/var/lib/plex-dcr`, read and then deleted.
   `metadata_item_views` holds every play by every account (back to Jan 2022 on this server).
 - IMDb: `datasets.imdbws.com/title.ratings.tsv.gz`, cached for 6 days.
+- Show status: Sonarr `GET /api/v3/series` (`status`: continuing, ended, upcoming, deleted).
 - Watchlists: Seerr `GET /api/v1/user/{id}/watchlist` for every Seerr user (admin API key).
   Users whose Plex sign-in in Seerr went stale come back empty.
 
