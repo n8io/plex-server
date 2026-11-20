@@ -1,22 +1,39 @@
 # plex-sharing-audit: quarterly account-sharing report
 
-Emails Nate a report of Plex accounts that look shared with another household.
-**Read-only**: it never changes Plex, Tautulli or any user.
+Finds Plex accounts that look shared with another household. **Read-only**: it never changes Plex, Tautulli or any user.
 
-Runs on the Plex box at 14:00 UTC (9 AM ET) on the 1st of January, April, July and October (`/etc/cron.d/plex-sharing-audit`).
-Install / update: `cd /plex-server && git pull && ./addons/plex-sharing-audit.sh`.
-Run now: `/usr/local/sbin/plex-sharing-audit.py` (emails) or `--no-email` (prints).
-Config: `/etc/plex-sharing-audit.env` (see `plex-sharing-audit.env.example`). Log: `/var/log/plex-sharing-audit.log`.
-Reports are kept in `/var/lib/plex-sharing-audit/report-YYYY-MM-DD.{txt,html}` (root only, they contain IPs).
-If a run fails it sends a Pushbullet push with the reason.
+**Schedule (Nate, 2026-11-20): reminder only.** At 14:00 UTC (9 AM ET) on the 1st of Jan, Apr, Jul and Oct the Plex box
+sends a Pushbullet push ("Plex sharing audit is due") linking to the Claude project thread "Detect Plex account sharing".
+Nate opens it and asks Claude to run the audit; Claude follows the runbook below and replies in the thread.
+Install / update the reminder: `cd /plex-server && git pull && ./addons/plex-sharing-audit.sh`
+(cron `/etc/cron.d/plex-sharing-audit`, config `/etc/plex-sharing-audit.env`, Pushbullet token copied from `/etc/plex-trash-clean.env`).
+
+## Runbook (for Claude)
+
+Read-only on the VPS. n8mini's auto-mode blocks `ssh tgl-prod` until Nate types a go-ahead in the thread; ask for it
+in a copy-pasteable code block, e.g. `yes, ssh to tgl-prod read-only and export the Tautulli DB for the sharing audit`.
+
+1. Take a consistent copy of the Coolify Tautulli DB without touching the live file (run from n8mini):
+   ```
+   C=$(ssh tgl-prod "docker ps --format '{{.Names}}' | grep -m1 tautulli")
+   ssh tgl-prod "docker exec $C python3 -c \"import sqlite3;s=sqlite3.connect('file:/config/tautulli.db?mode=ro',uri=True);d=sqlite3.connect('/tmp/taut-audit.db');s.backup(d)\""
+   ssh tgl-prod "docker exec $C cat /tmp/taut-audit.db" > /tmp/taut-audit.db
+   ssh tgl-prod "docker exec $C rm -f /tmp/taut-audit.db"
+   ```
+2. Run the audit on that copy (needs `pip install maxminddb`; it downloads the DB-IP lite databases itself):
+   `STATE_DIR=~/plex-sharing-audit ENV_FILE=/dev/null python3 addons/plex-sharing-audit/plex-sharing-audit.py --from-db /tmp/taut-audit.db --no-email`
+3. Delete `/tmp/taut-audit.db`. Summarize the report for Nate in the thread (flagged accounts with evidence, then the cleared ones).
+   The full report is in `$STATE_DIR/report-YYYY-MM-DD.txt` (it contains IPs: keep it on n8mini, never in a repo).
+
+Other inputs: `--from-csv sessions.csv` (the 2026-11-18 export format) or, with `TAUTULLI_API_KEY`, the Tautulli API.
+Add `RESEND_API_KEY`/`EMAIL_TO` and drop `--no-email` to email the report instead.
 
 ## Data
 
-- **Plays**: Tautulli `get_history` (`grouping=0`, last `LOOKBACK_DAYS` = 180) from the Coolify Tautulli at
-  plex-stats.n8io.com, which has the full history with client IPs. Plex's own DB has no IPs.
+- **Plays**: the Coolify Tautulli at plex-stats.n8io.com (`session_history`, last `LOOKBACK_DAYS` = 180), which has the
+  full history with client IPs. Plex's own DB has no IPs.
 - **IP lookups**: DB-IP lite city and ASN databases (free, CC BY 4.0), downloaded monthly into `/var/lib/plex-sharing-audit`.
   Lookups are local; IPs are never sent to a web API. db-ip.com returns 403 to Python's default User-Agent.
-- **Email**: Resend API, from `n8flix-noreply@n8io.com` (same verified domain as Seerr's emails).
 
 ## Method
 

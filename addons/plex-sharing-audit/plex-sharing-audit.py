@@ -16,7 +16,8 @@ Method (first run by hand 2026-11-18, thread "Detect Plex account sharing"):
   4. FLAG a user when two real homes were both active over the same OVERLAP_DAYS or more, or when
      two different homes streamed at the same moment CONCURRENT_MIN times or more.
      A home change with no overlap and no shared device is listed as a NOTE (likely a move).
-Config: /etc/plex-sharing-audit.env (root 600). See README.md.
+Runs on demand (Nate, 2026-11-20): a cron on the Plex box only sends a quarterly Pushbullet reminder
+(--remind); Nate then asks Claude to run the audit. See README.md for the runbook.
 """
 import argparse, collections, csv, datetime as dt, gzip, html, ipaddress, json, os, shutil, sys
 import urllib.parse, urllib.request
@@ -112,6 +113,20 @@ def fetch_history():
              'stopped': int(r.get('stopped') or r.get('started') or 0), 'machine_id': r.get('machine_id') or '',
              'player': r.get('player') or '', 'platform': r.get('platform') or '', 'product': r.get('product') or '',
              'location': r.get('location') or ''} for r in rows]
+
+def read_db(path):
+    """A copy of tautulli.db (take it with sqlite3 .backup; never read the live file)."""
+    import sqlite3
+    db = sqlite3.connect(f'file:{path}?mode=ro', uri=True)
+    db.row_factory = sqlite3.Row
+    since = int((NOW - dt.timedelta(days=LOOKBACK)).timestamp())
+    q = """SELECT sh.started, sh.stopped, sh.user_id, COALESCE(NULLIF(u.friendly_name, ''), u.username, sh.user) AS user,
+                  sh.ip_address, sh.machine_id, sh.player, sh.platform, sh.product, sh.location
+           FROM session_history sh LEFT JOIN users u ON u.user_id = sh.user_id WHERE sh.started >= ?"""
+    return [{'user': r['user'], 'user_id': str(r['user_id']), 'ip': r['ip_address'] or '', 'started': int(r['started']),
+             'stopped': int(r['stopped'] or r['started']), 'machine_id': r['machine_id'] or '', 'player': r['player'] or '',
+             'platform': r['platform'] or '', 'product': r['product'] or '', 'location': r['location'] or ''}
+            for r in db.execute(q, (since,))]
 
 def read_csv(path):
     """Test input: the sessions.csv export made on 2026-11-18."""
@@ -356,12 +371,19 @@ def email(subject, text, body):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument('--remind', action='store_true', help='only send the quarterly Pushbullet reminder (cron on the Plex box)')
+    ap.add_argument('--from-db', help='read plays from a copy of tautulli.db instead of the Tautulli API')
     ap.add_argument('--from-csv', help='test: read plays from a sessions.csv export instead of Tautulli')
     ap.add_argument('--geo-csv', help='test: ip,asn,as_org,city,region,country instead of the DB-IP databases')
     ap.add_argument('--no-email', action='store_true', help='print the report instead of emailing it')
     a = ap.parse_args()
+    if a.remind:
+        push('Plex sharing audit is due', 'Quarterly reminder: open the Claude thread "Detect Plex account sharing" '
+             'and ask it to run the audit (runbook: addons/plex-sharing-audit/README.md).',
+             env('REMIND_URL') or 'https://github.com/n8io/plex-server/tree/master/addons/plex-sharing-audit')
+        return
     try:
-        plays = read_csv(a.from_csv) if a.from_csv else fetch_history()
+        plays = read_db(a.from_db) if a.from_db else read_csv(a.from_csv) if a.from_csv else fetch_history()
         results = analyze(plays, Geo(a.geo_csv))
         subject, text, body = render(results, len(plays))
         os.makedirs(STATE, exist_ok=True)
