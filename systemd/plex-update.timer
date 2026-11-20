@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly check for a newer Plex Media Server
+
+[Timer]
+# Hourly so a release lands at the first quiet hour, not just one nightly slot.
+OnCalendar=hourly
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
