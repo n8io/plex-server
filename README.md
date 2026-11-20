@@ -78,6 +78,7 @@ addons/
   plex-scan-ui/ (+ .sh)    web page to scan one show/season/movie; .sh installs it
   plex-trash-clean/ (+ .sh) guarded nightly Empty Trash with Pushbullet alerts; .sh installs it
   plex-dcr/ (+ .sh)        weekly deletion-candidate rating; fills Plex Janitor "Leaving soon", never deletes
+  plex-sharing-audit/ (+ .sh) account-sharing audit from Tautulli IPs; .sh installs a quarterly Pushbullet reminder
   tautulli.sh              Tautulli stream history, tailnet only (https://<node>:8443)
   extended-personal-media-scanner.sh   scanner for libraries without standard metadata
 ```
