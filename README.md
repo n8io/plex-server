@@ -45,7 +45,7 @@ setup/
   01.dependencies.sh       apt packages, latest stable rclone (checksum-verified), fusermount3 shim
   02.os-settings.sh        sysctl tuning in /etc/sysctl.d/90-plex.conf (BBR, TCP buffers)
   03.cron-jobs.sh          installs the cron schedule (idempotent, removes retired jobs)
-  04.plex.sh               Plex from its official apt repo, unattended OS + Plex updates
+  04.plex.sh               Plex from its official apt repo (first install; updates via plex-update.timer)
   05.encryption.sh         installs and starts the systemd mount units
   06.plex-settings.sh      applies Plex's server settings via its API and reads them back
   07.tailscale.sh          joins the tailnet, serves Plex Scan UI to it
@@ -235,7 +235,8 @@ tail -f logs/rclone-media.log
 |---|---|---|
 | Ubuntu security fixes | `unattended-upgrades` (+ ESM with Ubuntu Pro) | nightly |
 | Kernel fixes | Livepatch (Ubuntu Pro), no reboot | as released |
-| Plex, Tailscale | their apt repos via `unattended-upgrades` | nightly |
+| Plex | `plex-update.timer`: newest build for `PLEX_UPDATE_CHANNEL` (default `beta` = Plex Pass) from plex.tv, checksum-verified, installed only at 0 streams, auto-rollback if it won't start, Pushbullet on major bumps/failures | hourly |
+| Tailscale | its apt repo via `unattended-upgrades` | nightly |
 | rclone | `rclone-update.timer`: checksum-verified, mounts move to it when idle | monthly |
 | Reboots | `plex-reboot-if-needed.timer`: only if needed and 0 streams | nightly ~4:20am ET |
 | Tautulli | updates itself | as released |
@@ -262,6 +263,17 @@ unattended-upgrades is actually stuck (check
 `/var/log/unattended-upgrades/unattended-upgrades.log` and
 `unattended-upgrade --dry-run -d`).
 `scripts/update-status.sh` on the server prints the same status as JSON.
+
+**Plex updates:** Plex's apt repo only carries public releases, and an apt
+upgrade restarts Plex even mid-stream, so `plexmediaserver` is blacklisted from
+unattended-upgrades. `scripts/plex-update.sh` (hourly) asks plex.tv for the
+newest build on the chosen channel using the server's own token, downloads and
+checksums it, and installs it only when `plex-sessions.sh` reports 0 streams
+(paused counts as a stream, so it waits). If Plex doesn't answer within 3
+minutes it reinstalls the previous build (cached in `/var/cache/plex-update`)
+and won't retry that version. Set `PLEX_UPDATE_CHANNEL=public` in `.env` or
+`/etc/plex-update.env` to stay on public releases. `DRY_RUN=1` shows what it
+would do. Log: `logs/updates.log`.
 
 ## Access and lockdown
 

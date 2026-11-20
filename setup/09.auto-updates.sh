@@ -1,7 +1,8 @@
 #!/bin/bash
 # Hands-off updates: Ubuntu Pro (security fixes to 2034 + Livepatch), nightly
-# unattended upgrades for Ubuntu, Plex and Tailscale, idle-only reboots, and a
-# monthly rclone update.
+# unattended upgrades for Ubuntu and Tailscale, hourly idle-only Plex updates
+# (scripts/plex-update.sh, Plex Pass beta channel by default), idle-only
+# reboots, and a monthly rclone update.
 #
 #   UBUNTU_PRO_TOKEN=<token> setup/09.auto-updates.sh
 #
@@ -32,8 +33,12 @@ Unattended-Upgrade::Origins-Pattern {
   "origin=Ubuntu,archive=${distro_codename}-security";
   "origin=UbuntuESM,archive=${distro_codename}-infra-security";
   "origin=UbuntuESMApps,archive=${distro_codename}-apps-security";
-  "site=repo.plex.tv";
   "site=pkgs.tailscale.com";
+};
+// Plex is updated by plex-update.timer instead: apt would restart it mid-stream,
+// and Plex's apt repo has no Plex Pass (beta) builds.
+Unattended-Upgrade::Package-Blacklist {
+  "plexmediaserver";
 };
 // Reboots are handled by plex-reboot-if-needed.timer, which waits for zero streams.
 Unattended-Upgrade::Automatic-Reboot "false";
@@ -47,12 +52,12 @@ APT::Periodic::AutocleanInterval "7";
 EOT
 echo "done."
 
-echo -n "  Timers for idle-only reboots and rclone..."
-for u in plex-reboot-if-needed.service plex-reboot-if-needed.timer rclone-update.service rclone-update.timer; do
+echo -n "  Timers for idle-only reboots, Plex and rclone..."
+for u in plex-reboot-if-needed.service plex-reboot-if-needed.timer rclone-update.service rclone-update.timer plex-update.service plex-update.timer; do
   sed -e "s|@PLEX_CODE_DIR@|${PLEX_CODE_DIR}|g" "${PLEX_CODE_DIR}/systemd/${u}" > "${UNIT_DIR}/${u}"
 done
 systemctl daemon-reload
-systemctl enable --now plex-reboot-if-needed.timer rclone-update.timer >/dev/null
+systemctl enable --now plex-reboot-if-needed.timer rclone-update.timer plex-update.timer >/dev/null
 echo "done."
 
 "${PLEX_CODE_DIR}/scripts/update-status.sh"
