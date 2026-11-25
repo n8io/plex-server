@@ -60,8 +60,11 @@ systemd/
   plex-reboot-if-needed.*  nightly reboot only when needed and nobody is streaming
   rclone-update.*          monthly rclone update
 monitor/
-  plex-watch.sh            off-box daily check; Pushbullet (or Slack) only on problems
-  install-macos.sh         installs plex-watch.sh as a launchd job
+  plex-watch.sh (+ -check.py) off-box daily check; Pushbullet (or Slack) only on problems
+  plex-uptime.sh           off-box every 5 min: mounts + SSH, alerts after 3 failures in a row
+  pull-backup.sh           off-box nightly copy of the newest Plex backup
+  common.sh                shared ssh key + notify helpers (docs/monitor.md)
+  install-macos.sh         installs the three off-box jobs as launchd jobs
   plex-client-check.py     runs on the Coolify VPS: plex.tv's record + remote access, as apps see it -> Gatus (docs/plex-client-check.md)
 scripts/
   mount.sh                 the rclone mount command (all flags live here): mount.sh media|photos
@@ -252,8 +255,8 @@ https://ubuntu.com/pro/dashboard).
 Pushbullet token) only when something is wrong: updates stalled for 3 days,
 security fixes still waiting after 2 days, a reboot pending over a week, mounts
 unreadable, Plex down, or Pro detached. Its config lives in
-`~/.config/plex-watch.env` (`PLEX_HOST`, `PUSHBULLET_TOKEN` or
-`SLACK_WEBHOOK_URL`) on that machine.
+`~/.config/plex-watch.env` (`PLEX_HOST`, `PLEX_SSH_KEY`, `PUSHBULLET_TOKEN` or
+`SLACK_WEBHOOK_URL`) on that machine. See docs/monitor.md.
 
 Security fixes waiting for under a day are normal: Ubuntu publishes them at any
 hour, `apt-daily` downloads them, and the nightly `apt-daily-upgrade` run
